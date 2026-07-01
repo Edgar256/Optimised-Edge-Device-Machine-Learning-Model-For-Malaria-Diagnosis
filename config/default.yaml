@@ -109,3 +109,18 @@ hyperparameter_optimization:
 explainability:
   output_dir: reports/explainability
   model_name: gradient_boosting
+
+api:
+  host: 0.0.0.0
+  port: 8000
+  model_name: gradient_boosting
+  cors_origins:
+    - "*"
+  defaults:
+    health_facility_name: kasomoro_health_centre
+    geographical_zone: mbaraara
+    season: Rainy
+  risk_thresholds:
+    high_confidence: 0.75
+    medium_confidence: 0.5
+    fever_temperature_celsius: 38.0

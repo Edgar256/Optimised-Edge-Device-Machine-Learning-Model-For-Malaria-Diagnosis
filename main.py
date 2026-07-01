@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.deployment.api import create_app
 from src.evaluation.explainability import write_explainability_outputs
 from src.features.engineering import write_feature_engineering_outputs
 from src.models.hyperparameter_search import write_hyperparameter_optimization_outputs
@@ -144,6 +145,22 @@ def _cmd_explain_model(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_serve_api(args: argparse.Namespace) -> int:
+    import uvicorn
+
+    config = load_config()
+    api_cfg = config.get("api", {})
+    host = args.host or api_cfg.get("host", "0.0.0.0")
+    port = args.port or int(api_cfg.get("port", 8000))
+
+    print(f"Starting offline API on http://{host}:{port}")
+    print(f"Health check     : http://{host}:{port}/health")
+    print(f"Predict endpoint : http://{host}:{port}/v1/predict")
+    print(f"OpenAPI docs     : http://{host}:{port}/docs")
+    uvicorn.run("src.deployment.api:app", host=host, port=port, reload=args.reload)
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Malaria edge-device ML — project utilities.",
@@ -229,6 +246,19 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path for the explainability report.",
     )
     explain_parser.set_defaults(func=_cmd_explain_model)
+
+    serve_parser = subparsers.add_parser(
+        "serve-api",
+        help="Run the offline FastAPI prediction server for edge/Android clients.",
+    )
+    serve_parser.add_argument("--host", default=None, help="Bind address (default from config).")
+    serve_parser.add_argument("--port", type=int, default=None, help="Bind port (default from config).")
+    serve_parser.add_argument(
+        "--reload",
+        action="store_true",
+        help="Enable auto-reload (development only).",
+    )
+    serve_parser.set_defaults(func=_cmd_serve_api)
 
     return parser
 
