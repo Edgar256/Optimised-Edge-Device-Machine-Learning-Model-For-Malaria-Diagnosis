@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.preprocessing.audit import write_audit_outputs
 from src.utils.config import get_raw_data_path, load_config
 from src.utils.paths import find_project_root, resolve_path
 
@@ -74,6 +75,17 @@ def _cmd_validate(_: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_audit(args: argparse.Namespace) -> int:
+    audit = write_audit_outputs(
+        report_path=args.report,
+        summary_path=args.summary,
+    )
+    print(f"Report written : {resolve_path(args.report)}")
+    print(f"Summary written: {resolve_path(args.summary)}")
+    print(f"Rows audited   : {audit.findings['shape']['rows']}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Malaria edge-device ML — project utilities.",
@@ -88,6 +100,22 @@ def build_parser() -> argparse.ArgumentParser:
         help="Validate raw data schema and ensure output directories exist.",
     )
     validate_parser.set_defaults(func=_cmd_validate)
+
+    audit_parser = subparsers.add_parser(
+        "audit",
+        help="Run read-only data quality audit and write report artifacts.",
+    )
+    audit_parser.add_argument(
+        "--report",
+        default="reports/data_quality_report.md",
+        help="Path for the markdown data quality report.",
+    )
+    audit_parser.add_argument(
+        "--summary",
+        default="results/data_quality_summary.csv",
+        help="Path for the per-column summary statistics CSV.",
+    )
+    audit_parser.set_defaults(func=_cmd_audit)
 
     return parser
 
