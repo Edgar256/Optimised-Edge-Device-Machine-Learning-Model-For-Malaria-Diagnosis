@@ -124,3 +124,6 @@ api:
     high_confidence: 0.75
     medium_confidence: 0.5
     fever_temperature_celsius: 38.0
+
+chapter4:
+  output_dir: reports/chapter4

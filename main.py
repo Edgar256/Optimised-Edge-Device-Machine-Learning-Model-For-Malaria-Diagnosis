@@ -10,6 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.deployment.api import create_app
+from src.evaluation.chapter4_tables import write_chapter4_tables
 from src.evaluation.explainability import write_explainability_outputs
 from src.features.engineering import write_feature_engineering_outputs
 from src.models.hyperparameter_search import write_hyperparameter_optimization_outputs
@@ -145,6 +146,15 @@ def _cmd_explain_model(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_generate_chapter4_tables(args: argparse.Namespace) -> int:
+    result = write_chapter4_tables(output_dir=args.output_dir)
+    print(f"Chapter 4 tables : {result.stats['table_count']}")
+    print(f"CSV output       : {result.stats['tables_dir']}")
+    print(f"PNG output       : {result.stats['figures_dir']}")
+    print(f"Manifest         : {result.stats['manifest_path']}")
+    return 0
+
+
 def _cmd_serve_api(args: argparse.Namespace) -> int:
     import uvicorn
 
@@ -246,6 +256,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path for the explainability report.",
     )
     explain_parser.set_defaults(func=_cmd_explain_model)
+
+    chapter4_parser = subparsers.add_parser(
+        "generate-chapter4-tables",
+        help="Generate Chapter 4 thesis tables as CSV and publication-quality PNG figures.",
+    )
+    chapter4_parser.add_argument(
+        "--output-dir",
+        default=None,
+        help="Output directory (default: reports/chapter4).",
+    )
+    chapter4_parser.set_defaults(func=_cmd_generate_chapter4_tables)
 
     serve_parser = subparsers.add_parser(
         "serve-api",
