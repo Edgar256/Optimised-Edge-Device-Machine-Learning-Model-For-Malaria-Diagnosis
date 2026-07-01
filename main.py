@@ -10,6 +10,8 @@ from pathlib import Path
 import pandas as pd
 
 from src.features.engineering import write_feature_engineering_outputs
+from src.models.hyperparameter_search import write_hyperparameter_optimization_outputs
+from src.models.train import write_baseline_training_outputs
 from src.preprocessing.audit import write_audit_outputs
 from src.preprocessing.pipeline import write_preprocessing_outputs
 from src.utils.config import get_raw_data_path, load_config
@@ -107,6 +109,26 @@ def _cmd_engineer_features(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_train_baselines(args: argparse.Namespace) -> int:
+    result = write_baseline_training_outputs(report_path=args.report)
+    print(f"Models trained : {result.stats['model_count']}")
+    print(f"Best model     : {result.stats['best_model']}")
+    print(f"Comparison     : {result.stats['comparison_path']}")
+    print(f"Ranking        : {result.stats['ranking_path']}")
+    print(f"Report         : {result.stats['report_path']}")
+    return 0
+
+
+def _cmd_optimize_models(args: argparse.Namespace) -> int:
+    result = write_hyperparameter_optimization_outputs(report_path=args.report)
+    print(f"Models optimized : {', '.join(result.stats['models_optimized'])}")
+    print(f"Before table     : {result.stats['before_path']}")
+    print(f"After table      : {result.stats['after_path']}")
+    print(f"Comparison       : {result.stats['comparison_path']}")
+    print(f"Report           : {result.stats['report_path']}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Malaria edge-device ML — project utilities.",
@@ -159,6 +181,28 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path for the feature engineering report.",
     )
     engineer_parser.set_defaults(func=_cmd_engineer_features)
+
+    train_parser = subparsers.add_parser(
+        "train-baselines",
+        help="Train and evaluate baseline models with stratified cross-validation.",
+    )
+    train_parser.add_argument(
+        "--report",
+        default="reports/baseline_training_report.md",
+        help="Path for the baseline training report.",
+    )
+    train_parser.set_defaults(func=_cmd_train_baselines)
+
+    optimize_parser = subparsers.add_parser(
+        "optimize-models",
+        help="RandomizedSearchCV tuning for top baseline models.",
+    )
+    optimize_parser.add_argument(
+        "--report",
+        default="reports/hyperparameter_optimization_report.md",
+        help="Path for the hyperparameter optimization report.",
+    )
+    optimize_parser.set_defaults(func=_cmd_optimize_models)
 
     return parser
 

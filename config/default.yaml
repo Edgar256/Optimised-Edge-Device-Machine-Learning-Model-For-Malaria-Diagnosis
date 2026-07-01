@@ -90,3 +90,18 @@ feature_engineering:
     - "Fever (Yes/No)"
     - "Headache (Yes/No)"
     - "Vomiting (Yes/No)"
+
+training:
+  cv_folds: 5
+  comparison_filename: baseline_comparison.csv
+  ranking_filename: baseline_ranking.csv
+  manifest_filename: baseline_training_manifest.json
+
+hyperparameter_optimization:
+  top_n: 3
+  n_iter: 30
+  ranking_source: baseline_ranking.csv
+  baseline_comparison_source: baseline_comparison.csv
+  before_filename: hyperparameter_before_optimization.csv
+  after_filename: hyperparameter_after_optimization.csv
+  comparison_filename: hyperparameter_comparison.csv

@@ -10,6 +10,7 @@ build/
 .venv/
 venv/
 env/
+.mplconfig/
 
 # Jupyter
 .ipynb_checkpoints/
