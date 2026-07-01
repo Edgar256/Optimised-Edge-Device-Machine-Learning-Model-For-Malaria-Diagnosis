@@ -64,3 +64,10 @@ data:
     - "Recent Travel (Yes/No)"
     - "Exposure Risk (e.g., mosquito-prone area) (Yes/No)"
     - "Household Malaria History (Yes/No)"
+
+preprocessing:
+  processed_dataset_filename: processed_dataset.csv
+  pipeline_filename: preprocessing_pipeline.joblib
+  scale_numeric: false
+  test_patient_ids:
+    - Test123

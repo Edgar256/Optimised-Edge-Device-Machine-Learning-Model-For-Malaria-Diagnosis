@@ -9,24 +9,9 @@ from typing import Any
 
 import pandas as pd
 
+from src.preprocessing.common import is_missing, load_raw_dataframe
 from src.utils.config import get_raw_data_path, load_config
 from src.utils.paths import resolve_path
-
-
-def is_missing(series: pd.Series) -> pd.Series:
-    """Treat NaN, empty strings, and whitespace-only values as missing."""
-    if series.dtype == object or pd.api.types.is_string_dtype(series):
-        return series.isna() | series.astype(str).str.strip().eq("")
-    return series.isna()
-
-
-def load_raw_dataframe(config: dict[str, Any] | None = None) -> tuple[pd.DataFrame, dict[str, Any]]:
-    """Load the raw CSV using project configuration."""
-    cfg = config or load_config()
-    data_cfg = cfg["data"]
-    path = get_raw_data_path(cfg)
-    df = pd.read_csv(path, sep=data_cfg["csv_separator"], encoding=data_cfg["encoding"])
-    return df, cfg
 
 
 def infer_semantic_type(column: str, yes_no_columns: list[str], target_column: str) -> str:

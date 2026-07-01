@@ -10,6 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.preprocessing.audit import write_audit_outputs
+from src.preprocessing.pipeline import write_preprocessing_outputs
 from src.utils.config import get_raw_data_path, load_config
 from src.utils.paths import find_project_root, resolve_path
 
@@ -86,6 +87,16 @@ def _cmd_audit(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_preprocess(args: argparse.Namespace) -> int:
+    result = write_preprocessing_outputs(report_path=args.report)
+    print(f"Processed dataset : {result.stats['processed_dataset_path']}")
+    print(f"Pipeline saved    : {result.stats['pipeline_path']}")
+    print(f"Report written    : {result.stats['report_path']}")
+    print(f"Rows in / rows out: {result.stats['initial_rows']} -> {result.stats['final_rows']}")
+    print(f"Feature columns   : {len(result.feature_names)}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Malaria edge-device ML — project utilities.",
@@ -116,6 +127,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path for the per-column summary statistics CSV.",
     )
     audit_parser.set_defaults(func=_cmd_audit)
+
+    preprocess_parser = subparsers.add_parser(
+        "preprocess",
+        help="Fit preprocessing pipeline and write processed dataset artifacts.",
+    )
+    preprocess_parser.add_argument(
+        "--report",
+        default="reports/preprocessing_report.md",
+        help="Path for the preprocessing report.",
+    )
+    preprocess_parser.set_defaults(func=_cmd_preprocess)
 
     return parser
 
