@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.evaluation.explainability import write_explainability_outputs
 from src.features.engineering import write_feature_engineering_outputs
 from src.models.hyperparameter_search import write_hyperparameter_optimization_outputs
 from src.models.train import write_baseline_training_outputs
@@ -129,6 +130,20 @@ def _cmd_optimize_models(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_explain_model(args: argparse.Namespace) -> int:
+    result = write_explainability_outputs(report_path=args.report)
+    print(f"Model explained  : {result.model_name}")
+    print(f"Report written   : {result.stats['report_path']}")
+    print(f"Figures          : {result.stats['figures_dir']}")
+    print(f"Tables           : {result.stats['tables_dir']}")
+    if result.symptom_ranking.empty:
+        print("Symptom ranking  : no symptom features found")
+    else:
+        top = result.symptom_ranking.iloc[0]
+        print(f"Top symptom      : {top['symptom']}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Malaria edge-device ML — project utilities.",
@@ -203,6 +218,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path for the hyperparameter optimization report.",
     )
     optimize_parser.set_defaults(func=_cmd_optimize_models)
+
+    explain_parser = subparsers.add_parser(
+        "explain-model",
+        help="Explain the best model with SHAP, permutation importance, and PDPs.",
+    )
+    explain_parser.add_argument(
+        "--report",
+        default="reports/explainability/best_model_explainability.md",
+        help="Path for the explainability report.",
+    )
+    explain_parser.set_defaults(func=_cmd_explain_model)
 
     return parser
 

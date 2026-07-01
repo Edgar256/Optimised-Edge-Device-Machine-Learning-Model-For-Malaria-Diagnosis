@@ -105,3 +105,7 @@ hyperparameter_optimization:
   before_filename: hyperparameter_before_optimization.csv
   after_filename: hyperparameter_after_optimization.csv
   comparison_filename: hyperparameter_comparison.csv
+
+explainability:
+  output_dir: reports/explainability
+  model_name: gradient_boosting

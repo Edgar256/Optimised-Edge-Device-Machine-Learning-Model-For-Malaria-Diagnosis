@@ -1,5 +1,6 @@
 """Offline metrics, cross-validation, and edge-device performance analysis."""
 
+from src.evaluation.explainability import write_explainability_outputs
 from src.evaluation.metrics import (
     METRIC_NAMES,
     confidence_interval,
@@ -15,5 +16,6 @@ __all__ = [
     "confidence_interval",
     "cross_validate_model",
     "cv_result_to_row",
+    "write_explainability_outputs",
     "rank_models",
 ]
