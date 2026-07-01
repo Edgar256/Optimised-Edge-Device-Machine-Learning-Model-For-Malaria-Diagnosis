@@ -29,7 +29,7 @@ def get_baseline_models(random_seed: int = 42) -> dict[str, Any]:
     models: dict[str, Any] = {
         "logistic_regression": _scaled_pipeline(
             LogisticRegression(
-                max_iter=2000,
+                max_iter=5000,
                 class_weight="balanced",
                 random_state=random_seed,
             )

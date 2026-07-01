@@ -16,9 +16,15 @@ def test_confidence_interval_narrow_with_more_folds() -> None:
 
 
 def test_get_param_distributions_for_top_models() -> None:
-    for model_name in ("logistic_regression", "gradient_boosting", "decision_tree"):
+    for model_name in ("logistic_regression", "gradient_boosting", "decision_tree", "catboost"):
         params = get_param_distributions(model_name)
         assert len(params) >= 3
+
+
+def test_logistic_regression_search_space_has_no_elasticnet() -> None:
+    params = get_param_distributions("logistic_regression")
+    assert "model__penalty" not in params
+    assert "model__l1_ratio" in params
 
 
 def test_get_top_model_names_from_ranking() -> None:

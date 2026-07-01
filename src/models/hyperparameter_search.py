@@ -37,21 +37,25 @@ def _optimization_config(config: dict[str, Any]) -> dict[str, Any]:
     return config.get("hyperparameter_optimization", {})
 
 
-def get_top_model_names(config: dict[str, Any] | None = None, top_n: int = 3) -> list[str]:
-    """Read the top-ranked models from the baseline ranking table."""
-    cfg = config or load_config()
-    opt_cfg = _optimization_config(cfg)
-    ranking_path = resolve_path(
-        Path(cfg["paths"]["results_dir"]) / opt_cfg.get("ranking_source", "baseline_ranking.csv")
-    )
-    if not ranking_path.is_file():
-        raise FileNotFoundError(f"Baseline ranking not found at {ranking_path}. Run train-baselines first.")
+def _pythonify_param(value: Any) -> Any:
+    if isinstance(value, np.generic):
+        return value.item()
+    return value
 
-    ranking = pd.read_csv(ranking_path)
-    explicit = opt_cfg.get("model_names")
-    if explicit:
-        return list(explicit)
-    return ranking.sort_values("rank").head(top_n)["model_name"].tolist()
+
+def _pythonify_params(params: dict[str, Any]) -> dict[str, Any]:
+    return {key: _pythonify_param(value) for key, value in params.items()}
+
+
+def _estimator_for_cross_validation(
+    model_name: str,
+    best_params: dict[str, Any],
+    baseline_models: dict[str, Any],
+) -> Any:
+    """Return a clone-safe estimator for post-search cross-validation."""
+    if model_name in {"catboost", "xgboost", "lightgbm"}:
+        return baseline_models[model_name].set_params(**_pythonify_params(best_params))
+    return baseline_models[model_name].set_params(**_pythonify_params(best_params))
 
 
 def get_param_distributions(model_name: str) -> dict[str, Any]:
@@ -59,7 +63,7 @@ def get_param_distributions(model_name: str) -> dict[str, Any]:
     if model_name == "logistic_regression":
         return {
             "model__C": loguniform(1e-3, 1e2),
-            "model__l1_ratio": uniform(0.0, 1.0),
+            "model__l1_ratio": [0.0, 1.0],
             "model__solver": ["liblinear", "saga"],
             "model__class_weight": ["balanced", None],
         }
@@ -80,7 +84,74 @@ def get_param_distributions(model_name: str) -> dict[str, Any]:
             "criterion": ["gini", "entropy", "log_loss"],
             "class_weight": ["balanced", None],
         }
+    if model_name == "catboost":
+        return {
+            "depth": randint(3, 8),
+            "learning_rate": uniform(0.01, 0.29),
+            "iterations": randint(100, 400),
+            "l2_leaf_reg": uniform(1.0, 9.0),
+        }
+    if model_name == "xgboost":
+        return {
+            "n_estimators": randint(50, 300),
+            "max_depth": randint(2, 8),
+            "learning_rate": uniform(0.01, 0.29),
+            "subsample": uniform(0.6, 0.4),
+            "colsample_bytree": uniform(0.6, 0.4),
+        }
+    if model_name == "lightgbm":
+        return {
+            "n_estimators": randint(50, 300),
+            "max_depth": randint(2, 8),
+            "learning_rate": uniform(0.01, 0.29),
+            "num_leaves": randint(15, 63),
+            "subsample": uniform(0.6, 0.4),
+        }
     raise ValueError(f"No hyperparameter distribution defined for model: {model_name}")
+
+
+def is_optimizable_model(model_name: str) -> bool:
+    """Return True when RandomizedSearchCV distributions exist for the model."""
+    try:
+        get_param_distributions(model_name)
+    except ValueError:
+        return False
+    return True
+
+
+def get_top_model_names(config: dict[str, Any] | None = None, top_n: int = 3) -> list[str]:
+    """Read the top-ranked optimizable models from the baseline ranking table."""
+    cfg = config or load_config()
+    opt_cfg = _optimization_config(cfg)
+    ranking_path = resolve_path(
+        Path(cfg["paths"]["results_dir"]) / opt_cfg.get("ranking_source", "baseline_ranking.csv")
+    )
+    if not ranking_path.is_file():
+        raise FileNotFoundError(f"Baseline ranking not found at {ranking_path}. Run train-baselines first.")
+
+    ranking = pd.read_csv(ranking_path)
+    explicit = opt_cfg.get("model_names")
+    if explicit:
+        names = [str(name) for name in explicit]
+        unsupported = [name for name in names if not is_optimizable_model(name)]
+        if unsupported:
+            raise ValueError(f"Models without hyperparameter search space: {unsupported}")
+        return names
+
+    selected: list[str] = []
+    for model_name in ranking.sort_values("rank")["model_name"]:
+        if not is_optimizable_model(model_name):
+            continue
+        selected.append(str(model_name))
+        if len(selected) >= top_n:
+            break
+
+    if len(selected) < top_n:
+        raise ValueError(
+            f"Only {len(selected)} optimizable models found in ranking; need {top_n}. "
+            "Add param distributions or lower hyperparameter_optimization.top_n."
+        )
+    return selected
 
 
 def _load_before_metrics(config: dict[str, Any], model_names: list[str]) -> pd.DataFrame:
@@ -192,8 +263,9 @@ def optimize_top_models(config: dict[str, Any] | None = None) -> HyperparameterO
         search_time = time.perf_counter() - search_start
 
         optimized_estimator = search.best_estimator_
+        cv_estimator = _estimator_for_cross_validation(model_name, search.best_params_, baseline_models)
         cv_result = cross_validate_model(
-            optimized_estimator,
+            cv_estimator,
             X,
             y,
             n_splits=n_splits,
