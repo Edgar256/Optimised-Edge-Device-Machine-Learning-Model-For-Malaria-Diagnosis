@@ -1,0 +1,66 @@
+project:
+  name: malaria-edge-ml
+  title: "Optimising Edge-Device Machine Learning Models for Malaria Diagnosis in Rural Health Centers in Hoima District, Uganda"
+  random_seed: 42
+
+paths:
+  raw_data_dir: data/raw
+  processed_data_dir: data/processed
+  models_dir: models
+  results_dir: results
+  figures_dir: figures
+  reports_dir: reports
+
+data:
+  raw_filename: PATIENT_RECORD_DATA_EXTRACTION_FORM_-_all_versions_-_labels_-_2026-06-30-23-54-52.csv
+  csv_separator: ";"
+  encoding: utf-8
+
+  target_column: "Final Confirmed Diagnosis (Malaria / Not Malaria)"
+  target_positive_label: Malaria
+  target_negative_label: "Not malaria"
+
+  identifier_columns:
+    - "Patient ID (Anonymous Code)"
+    - _uuid
+
+  metadata_columns:
+    - start
+    - end
+    - _id
+    - _submission_time
+    - _validation_status
+    - _notes
+    - _status
+    - _submitted_by
+    - __version__
+    - _tags
+    - meta/rootUuid
+    - _index
+
+  # Columns recorded after or during diagnostic workup; exclude from triage-time features.
+  post_diagnosis_columns:
+    - "Rapid Diagnostic Test (RDT) Result (Positive/Negative)"
+    - "Microscopy Result (Positive/Negative)"
+    - "Parasite Density (if available)"
+    - "Treatment Given"
+    - "Additional Clinical Notes"
+
+  clinical_feature_columns:
+    - "Health Facility Name"
+    - "Date of Visit"
+    - Age
+    - "Gender (Male/Female)"
+    - "Geographical Zone"
+    - "Fever (Yes/No)"
+    - "Headache (Yes/No)"
+    - "Chills (Yes/No)"
+    - "Vomiting (Yes/No)"
+    - "Fatigue (Yes/No)"
+    - "Other Symptoms (Specify)"
+    - "Fever Duration (Days)"
+    - "Anemia Signs (Yes/No)"
+    - "Season of Visit (Dry/Rainy)"
+    - "Recent Travel (Yes/No)"
+    - "Exposure Risk (e.g., mosquito-prone area) (Yes/No)"
+    - "Household Malaria History (Yes/No)"
