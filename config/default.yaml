@@ -71,3 +71,22 @@ preprocessing:
   scale_numeric: false
   test_patient_ids:
     - Test123
+
+feature_engineering:
+  input_filename: processed_dataset.csv
+  output_filename: engineered_dataset.csv
+  age_child_max: 17
+  age_senior_min: 60
+  pediatric_high_risk_max: 4
+  fever_acute_max_days: 2
+  fever_prolonged_min_days: 3
+  all_symptoms:
+    - "Fever (Yes/No)"
+    - "Headache (Yes/No)"
+    - "Chills (Yes/No)"
+    - "Vomiting (Yes/No)"
+    - "Fatigue (Yes/No)"
+  core_symptoms:
+    - "Fever (Yes/No)"
+    - "Headache (Yes/No)"
+    - "Vomiting (Yes/No)"

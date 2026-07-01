@@ -9,6 +9,7 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.features.engineering import write_feature_engineering_outputs
 from src.preprocessing.audit import write_audit_outputs
 from src.preprocessing.pipeline import write_preprocessing_outputs
 from src.utils.config import get_raw_data_path, load_config
@@ -97,6 +98,15 @@ def _cmd_preprocess(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_engineer_features(args: argparse.Namespace) -> int:
+    result = write_feature_engineering_outputs(report_path=args.report)
+    print(f"Engineered dataset : {result.stats['output_path']}")
+    print(f"Report written     : {result.stats['report_path']}")
+    print(f"Rows engineered    : {result.stats['output_rows']}")
+    print(f"New features       : {result.stats['engineered_feature_count']}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Malaria edge-device ML — project utilities.",
@@ -138,6 +148,17 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path for the preprocessing report.",
     )
     preprocess_parser.set_defaults(func=_cmd_preprocess)
+
+    engineer_parser = subparsers.add_parser(
+        "engineer-features",
+        help="Create triage-safe clinical features from the processed dataset.",
+    )
+    engineer_parser.add_argument(
+        "--report",
+        default="reports/feature_engineering_report.md",
+        help="Path for the feature engineering report.",
+    )
+    engineer_parser.set_defaults(func=_cmd_engineer_features)
 
     return parser
 
