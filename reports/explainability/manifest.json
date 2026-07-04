@@ -1,0 +1,26 @@
+{
+  "generated_at_utc": "2026-07-04T08:52:08.902052+00:00",
+  "model_name": "catboost",
+  "samples": 844,
+  "feature_count": 71,
+  "figures_dir": "reports/explainability/figures",
+  "tables_dir": "reports/explainability/tables",
+  "performance_summary": "The selected model achieved ROC AUC **0.984** (95% CI [0.968, 1.000]), recall **0.959**, and F1 **0.930** after hyperparameter optimization.",
+  "symptom_narrative_permutation": "Based on **permutation importance**, the symptoms most associated with malaria diagnosis are:\n\n- **Other Symptoms (Specify)** (aggregate score 0.0013)\n- **Fever (Yes/No)** (aggregate score 0.0012)\n- **Headache (Yes/No)** (aggregate score 0.0002)\n\nPositive associations for binary symptom features indicate that reporting the symptom increases predicted malaria risk relative to the reference encoded category.",
+  "symptom_narrative_shap": "Based on **SHAP values**, the symptoms most associated with malaria diagnosis are:\n\n- **Fever (Yes/No)** (aggregate score 0.3173)\n- **Other Symptoms (Specify)** (aggregate score 0.0286)\n- **Headache (Yes/No)** (aggregate score 0.0190)\n\nPositive associations for binary symptom features indicate that reporting the symptom increases predicted malaria risk relative to the reference encoded category.",
+  "shap_generated": true,
+  "pdp_files": [
+    "partial_dependence_panels.png",
+    "pdp_Age.png",
+    "pdp_Fever_Duration_(Days).png",
+    "pdp_Fever_(Yes_No)_yes.png",
+    "pdp_Headache_(Yes_No)_yes.png",
+    "pdp_Vomiting_(Yes_No)_yes.png"
+  ],
+  "best_params": {
+    "depth": 3,
+    "iterations": 121,
+    "l2_leaf_reg": 1.0635967469774568,
+    "learning_rate": 0.01668810326201057
+  }
+}

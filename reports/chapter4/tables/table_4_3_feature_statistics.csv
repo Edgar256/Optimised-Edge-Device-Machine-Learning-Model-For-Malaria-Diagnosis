@@ -1,0 +1,17 @@
+feature,type,count,mean,std,min,median,max,mode_or_top_category
+Age,numeric,841,17.26,15.21,0.0,13.0,84.0,—
+Fever Duration (Days),numeric,805,0.36,1.05,0.0,0.0,20.0,—
+Health Facility Name,categorical,834,—,—,—,—,—,mbaraara (n=651)
+Gender (Male/Female),categorical,838,—,—,—,—,—,female (n=511)
+Geographical Zone,categorical,823,—,—,—,—,—,mbaraara (n=634)
+Fever (Yes/No),categorical,836,—,—,—,—,—,no (n=482)
+Headache (Yes/No),categorical,827,—,—,—,—,—,no (n=655)
+Chills (Yes/No),categorical,830,—,—,—,—,—,yes (n=817)
+Vomiting (Yes/No),categorical,822,—,—,—,—,—,no (n=772)
+Fatigue (Yes/No),categorical,835,—,—,—,—,—,yes (n=820)
+Anemia Signs (Yes/No),categorical,818,—,—,—,—,—,no (n=805)
+Recent Travel (Yes/No),categorical,835,—,—,—,—,—,no (n=832)
+"Exposure Risk (e.g., mosquito-prone area) (Yes/No)",categorical,834,—,—,—,—,—,yes (n=824)
+Household Malaria History (Yes/No),categorical,833,—,—,—,—,—,no (n=711)
+Season of Visit (Dry/Rainy),categorical,838,—,—,—,—,—,Rainy (n=830)
+Other Symptoms (Specify),categorical,675,—,—,—,—,—,<missing> (n=169)

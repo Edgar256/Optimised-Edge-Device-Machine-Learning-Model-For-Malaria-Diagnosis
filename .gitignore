@@ -17,14 +17,11 @@ env/
 *.ipynb_checkpoints
 
 # ML artifacts (tracked structure, not binary outputs)
+# results/ and reports/ are versioned for thesis reproducibility.
 models/*
 !models/.gitkeep
-results/*
-!results/.gitkeep
 figures/*
 !figures/.gitkeep
-reports/*
-!reports/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
 catboost_info/

@@ -1,0 +1,19 @@
+variable,non_missing,missing,missing_percent
+Other Symptoms (Specify),682,221,24.47
+Fever Duration (Days),824,79,8.75
+Anemia Signs (Yes/No),828,75,8.31
+Vomiting (Yes/No),832,71,7.86
+Geographical Zone,833,70,7.75
+Headache (Yes/No),838,65,7.2
+Chills (Yes/No),841,62,6.87
+Health Facility Name,843,60,6.64
+Household Malaria History (Yes/No),843,60,6.64
+Recent Travel (Yes/No),844,59,6.53
+"Exposure Risk (e.g., mosquito-prone area) (Yes/No)",845,58,6.42
+Date of Visit,846,57,6.31
+Fatigue (Yes/No),846,57,6.31
+Fever (Yes/No),846,57,6.31
+Final Confirmed Diagnosis (Malaria / Not Malaria),847,56,6.2
+Gender (Male/Female),849,54,5.98
+Season of Visit (Dry/Rainy),849,54,5.98
+Age,853,50,5.54

@@ -1,0 +1,9 @@
+model,model_size_mb,cv_prediction_time_ms,cv_prediction_time_std_ms,peak_memory_mb,training_time_seconds,deployment_ready,single_patient_latency_ms
+logistic_regression,0.0059,0.678,0.255,0.0723,0.013,True,—
+decision_tree,0.0047,0.275,0.068,0.0208,0.006,True,—
+random_forest,2.1092,41.214,4.665,0.1636,0.388,False,—
+extra_trees,3.8207,38.36,1.912,0.1647,0.321,False,—
+gradient_boosting,0.1345,0.86,0.251,0.0229,0.163,False,—
+support_vector_machine,0.1613,9.187,1.855,0.0723,0.097,False,—
+mlp,0.1662,0.945,0.249,0.0994,0.194,False,—
+catboost,0.0341,1.415,1.07,0.0027,0.164,True,5.394

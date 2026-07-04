@@ -1,0 +1,21 @@
+{
+  "generated_at_utc": "2026-07-04T08:51:19.995576+00:00",
+  "models_trained": [
+    "logistic_regression",
+    "decision_tree",
+    "random_forest",
+    "extra_trees",
+    "gradient_boosting",
+    "support_vector_machine",
+    "mlp",
+    "catboost"
+  ],
+  "model_count": 8,
+  "samples": 844,
+  "feature_count": 71,
+  "cv_folds": 5,
+  "comparison_path": "results/baseline_comparison.csv",
+  "ranking_path": "results/baseline_ranking.csv",
+  "best_model": "logistic_regression",
+  "best_rank_score": 0.9425344677243016
+}

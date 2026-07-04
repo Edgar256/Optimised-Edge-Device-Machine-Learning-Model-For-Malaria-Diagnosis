@@ -1,0 +1,48 @@
+{
+  "generated_at_utc": "2026-07-04T08:52:14.639507+00:00",
+  "output_dir": "reports/chapter4",
+  "tables": {
+    "table_4_1_dataset_summary": {
+      "title": "Table 4.1 Dataset Summary",
+      "caption": "Table 4.1 Summary of the Hoima District clinical dataset used for malaria diagnosis modelling, including record counts, class distribution, and preprocessing outcomes.",
+      "csv": "reports/chapter4/tables/table_4_1_dataset_summary.csv",
+      "figure": "reports/chapter4/figures/table_4_1_dataset_summary.png"
+    },
+    "table_4_2_missing_values": {
+      "title": "Table 4.2 Missing Values",
+      "caption": "Table 4.2 Missing-value profile for clinical intake variables in the raw Kobo export before preprocessing (n = total raw records).",
+      "csv": "reports/chapter4/tables/table_4_2_missing_values.csv",
+      "figure": "reports/chapter4/figures/table_4_2_missing_values.png"
+    },
+    "table_4_3_feature_statistics": {
+      "title": "Table 4.3 Feature Statistics",
+      "caption": "Table 4.3 Descriptive statistics for modelled clinical features after preprocessing and prior to one-hot encoding.",
+      "csv": "reports/chapter4/tables/table_4_3_feature_statistics.csv",
+      "figure": "reports/chapter4/figures/table_4_3_feature_statistics.png"
+    },
+    "table_4_4_baseline_results": {
+      "title": "Table 4.4 Baseline Results",
+      "caption": "Table 4.4 Stratified five-fold cross-validation performance of baseline classifiers on the preprocessed feature matrix (mean \u00b1 standard deviation).",
+      "csv": "reports/chapter4/tables/table_4_4_baseline_results.csv",
+      "figure": "reports/chapter4/figures/table_4_4_baseline_results.png"
+    },
+    "table_4_5_optimized_results": {
+      "title": "Table 4.5 Optimized Results",
+      "caption": "Table 4.5 Performance of hyperparameter-tuned models after RandomizedSearchCV, reported with 95% confidence intervals from cross-validation folds.",
+      "csv": "reports/chapter4/tables/table_4_5_optimized_results.csv",
+      "figure": "reports/chapter4/figures/table_4_5_optimized_results.png"
+    },
+    "table_4_6_model_comparison": {
+      "title": "Table 4.6 Model Comparison",
+      "caption": "Table 4.6 Before-and-after comparison of key metrics for tuned models, showing absolute change (\u0394) following hyperparameter optimization.",
+      "csv": "reports/chapter4/tables/table_4_6_model_comparison.csv",
+      "figure": "reports/chapter4/figures/table_4_6_model_comparison.png"
+    },
+    "table_4_7_edge_performance": {
+      "title": "Table 4.7 Edge Performance",
+      "caption": "Table 4.7 Edge-deployment resource profile: serialized model size, cross-validated inference latency, peak memory during batch prediction, and single-patient API latency.",
+      "csv": "reports/chapter4/tables/table_4_7_edge_performance.csv",
+      "figure": "reports/chapter4/figures/table_4_7_edge_performance.png"
+    }
+  }
+}

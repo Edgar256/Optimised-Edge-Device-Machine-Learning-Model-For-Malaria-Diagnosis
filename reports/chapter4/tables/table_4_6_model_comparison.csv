@@ -1,0 +1,22 @@
+model,metric,before_optimization,after_optimization,delta
+logistic_regression,Accuracy,0.9657,0.9739,0.0083
+logistic_regression,Precision,0.8874,0.9636,0.0762
+logistic_regression,Recall (sensitivity),0.9172,0.8828,-0.0345
+logistic_regression,Specificity,0.9757,0.9928,0.0171
+logistic_regression,ROC AUC,0.9696,0.9826,0.013
+logistic_regression,F1 score,0.9012,0.9203,0.019
+logistic_regression,Balanced accuracy,0.9465,0.9378,-0.0087
+decision_tree,Accuracy,0.9727,0.9763,0.0036
+decision_tree,Precision,0.9315,0.9163,-0.0152
+decision_tree,Recall (sensitivity),0.9103,0.9517,0.0414
+decision_tree,Specificity,0.9857,0.9814,-0.0043
+decision_tree,ROC AUC,0.948,0.9776,0.0296
+decision_tree,F1 score,0.9199,0.9327,0.0128
+decision_tree,Balanced accuracy,0.948,0.9666,0.0185
+catboost,Accuracy,0.9751,0.9751,-0.0
+catboost,Precision,0.9149,0.9039,-0.011
+catboost,Recall (sensitivity),0.9448,0.9586,0.0138
+catboost,Specificity,0.9814,0.9785,-0.0029
+catboost,ROC AUC,0.9806,0.9838,0.0032
+catboost,F1 score,0.9289,0.93,0.0011
+catboost,Balanced accuracy,0.9631,0.9686,0.0055

@@ -1,0 +1,9 @@
+{
+  "table_4_1_dataset_summary": "Table 4.1 Summary of the Hoima District clinical dataset used for malaria diagnosis modelling, including record counts, class distribution, and preprocessing outcomes.",
+  "table_4_2_missing_values": "Table 4.2 Missing-value profile for clinical intake variables in the raw Kobo export before preprocessing (n = total raw records).",
+  "table_4_3_feature_statistics": "Table 4.3 Descriptive statistics for modelled clinical features after preprocessing and prior to one-hot encoding.",
+  "table_4_4_baseline_results": "Table 4.4 Stratified five-fold cross-validation performance of baseline classifiers on the preprocessed feature matrix (mean \u00b1 standard deviation).",
+  "table_4_5_optimized_results": "Table 4.5 Performance of hyperparameter-tuned models after RandomizedSearchCV, reported with 95% confidence intervals from cross-validation folds.",
+  "table_4_6_model_comparison": "Table 4.6 Before-and-after comparison of key metrics for tuned models, showing absolute change (\u0394) following hyperparameter optimization.",
+  "table_4_7_edge_performance": "Table 4.7 Edge-deployment resource profile: serialized model size, cross-validated inference latency, peak memory during batch prediction, and single-patient API latency."
+}

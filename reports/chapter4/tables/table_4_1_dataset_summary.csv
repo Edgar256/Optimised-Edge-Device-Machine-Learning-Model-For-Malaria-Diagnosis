@@ -1,0 +1,13 @@
+metric,value
+Study setting,"Hoima District, Uganda (rural health centres)"
+Data source,data/raw/PATIENT_RECORD_DATA_EXTRACTION_FORM.csv
+Raw records,903
+Labelled diagnoses,847
+Malaria cases,146
+Not malaria cases,701
+Class imbalance ratio (negative:positive),4.8
+Clinical feature fields,17
+Records after preprocessing,844
+Encoded model features,71
+Target variable,Final Confirmed Diagnosis (Malaria / Not Malaria)
+Temperature column present,False
