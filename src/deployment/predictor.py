@@ -13,7 +13,11 @@ import pandas as pd
 from sklearn.pipeline import Pipeline
 
 from src.deployment.schemas import DiagnosticResult, Gender, PredictionRequest, PredictionResponse
-from src.evaluation.explainability import load_model_artifact, resolve_best_model_name
+from src.evaluation.explainability import (
+    _optional_model_override,
+    load_model_artifact,
+    resolve_best_model_name,
+)
 from src.preprocessing.common import model_feature_columns
 from src.utils.config import load_config
 from src.utils.paths import resolve_path
@@ -208,7 +212,8 @@ def load_predictor_artifacts(config: dict[str, Any] | None = None) -> PredictorA
     """Load the best model and fitted preprocessing pipeline from local disk."""
     cfg = config or load_config()
     api_cfg = _api_config(cfg)
-    model_name = str(api_cfg.get("model_name") or resolve_best_model_name(cfg))
+    # Auto-select baseline rank-1 model unless api.model_name is set.
+    model_name = _optional_model_override(api_cfg.get("model_name")) or resolve_best_model_name(cfg)
 
     artifact = load_model_artifact(model_name, config=cfg)
     pipeline_rel = artifact.get(

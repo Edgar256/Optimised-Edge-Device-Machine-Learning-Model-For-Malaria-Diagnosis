@@ -17,6 +17,7 @@ from src.models.hyperparameter_search import write_hyperparameter_optimization_o
 from src.models.train import write_baseline_training_outputs
 from src.preprocessing.audit import write_audit_outputs
 from src.preprocessing.pipeline import write_preprocessing_outputs
+from src.utils.cleanup import clean_training_artifacts
 from src.utils.config import get_raw_data_path, load_config
 from src.utils.paths import find_project_root, resolve_path
 
@@ -155,6 +156,25 @@ def _cmd_generate_chapter4_tables(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_clean_artifacts(args: argparse.Namespace) -> int:
+    result = clean_training_artifacts(
+        include_processed=args.include_processed,
+        dry_run=args.dry_run,
+    )
+    action = "Would delete" if result.dry_run else "Deleted"
+    print(f"{action} {len(result.deleted)} path(s)")
+    if result.include_processed:
+        print("Included        : data/processed/")
+    else:
+        print("Preserved       : data/raw/, data/processed/")
+    if args.verbose:
+        for path in result.deleted:
+            print(f"  - {path}")
+    if result.dry_run:
+        print("Dry run only — no files were removed. Re-run without --dry-run to delete.")
+    return 0
+
+
 def _cmd_serve_api(args: argparse.Namespace) -> int:
     import uvicorn
 
@@ -185,6 +205,27 @@ def build_parser() -> argparse.ArgumentParser:
         help="Validate raw data schema and ensure output directories exist.",
     )
     validate_parser.set_defaults(func=_cmd_validate)
+
+    clean_parser = subparsers.add_parser(
+        "clean-artifacts",
+        help="Delete past models, results, figures, and reports before retraining.",
+    )
+    clean_parser.add_argument(
+        "--include-processed",
+        action="store_true",
+        help="Also delete data/processed/ (pipeline and processed CSVs).",
+    )
+    clean_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="List paths that would be deleted without removing them.",
+    )
+    clean_parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Print each deleted path.",
+    )
+    clean_parser.set_defaults(func=_cmd_clean_artifacts)
 
     audit_parser = subparsers.add_parser(
         "audit",

@@ -60,12 +60,28 @@ def _explainability_config(config: dict[str, Any]) -> dict[str, Any]:
 
 
 def resolve_best_model_name(config: dict[str, Any] | None = None) -> str:
-    """Select the best model by post-optimization ROC AUC."""
+    """Auto-select the best model from the latest evaluation results.
+
+    Priority:
+    1. Rank 1 in ``baseline_ranking.csv`` (composite clinical / edge score)
+    2. Highest ``roc_auc_mean`` in ``hyperparameter_after_optimization.csv``
+
+    The selected name is then loaded from ``models/optimized/`` when available,
+    otherwise ``models/baseline/``.
+
+    Optional manual overrides live in config (``api.model_name`` /
+    ``explainability.model_name``) and are applied by callers, not here.
+    """
     cfg = config or load_config()
-    exp_cfg = _explainability_config(cfg)
-    explicit = exp_cfg.get("model_name")
-    if explicit:
-        return str(explicit)
+
+    ranking_path = resolve_path(
+        Path(cfg["paths"]["results_dir"])
+        / cfg.get("training", {}).get("ranking_filename", "baseline_ranking.csv")
+    )
+    if ranking_path.is_file():
+        ranking = pd.read_csv(ranking_path)
+        if not ranking.empty and "rank" in ranking.columns:
+            return str(ranking.sort_values("rank").iloc[0]["model_name"])
 
     after_path = resolve_path(
         Path(cfg["paths"]["results_dir"])
@@ -75,13 +91,21 @@ def resolve_best_model_name(config: dict[str, Any] | None = None) -> str:
     )
     if after_path.is_file():
         after = pd.read_csv(after_path)
-        return str(after.sort_values("roc_auc_mean", ascending=False).iloc[0]["model_name"])
+        if not after.empty and "roc_auc_mean" in after.columns:
+            return str(after.sort_values("roc_auc_mean", ascending=False).iloc[0]["model_name"])
 
-    ranking_path = resolve_path(
-        Path(cfg["paths"]["results_dir"]) / cfg.get("training", {}).get("ranking_filename", "baseline_ranking.csv")
+    raise FileNotFoundError(
+        "No baseline ranking or optimization results found. "
+        "Run train-baselines (and preferably optimize-models) first."
     )
-    ranking = pd.read_csv(ranking_path)
-    return str(ranking.sort_values("rank").iloc[0]["model_name"])
+
+
+def _optional_model_override(value: Any) -> str | None:
+    """Return a non-empty model name override, or None for auto-select."""
+    if value is None:
+        return None
+    name = str(value).strip()
+    return name or None
 
 
 def load_model_artifact(model_name: str, config: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -385,7 +409,7 @@ def run_explainability(config: dict[str, Any] | None = None) -> ExplainabilityRe
     exp_cfg = _explainability_config(cfg)
     random_seed = int(cfg["project"].get("random_seed", 42))
 
-    model_name = resolve_best_model_name(cfg)
+    model_name = _optional_model_override(exp_cfg.get("model_name")) or resolve_best_model_name(cfg)
     artifact = load_model_artifact(model_name, cfg)
     model = _get_estimator(artifact)
     X, y, feature_names = load_preprocessed_training_data(cfg)

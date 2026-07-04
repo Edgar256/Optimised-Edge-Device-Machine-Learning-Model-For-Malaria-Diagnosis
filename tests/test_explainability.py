@@ -41,9 +41,19 @@ def test_auto_symptom_narrative_mentions_top_symptoms() -> None:
     assert "Fever (Yes/No)" in narrative
 
 
-def test_resolve_best_model_name() -> None:
+def test_resolve_best_model_name_auto_selects_by_baseline_rank() -> None:
+    from src.utils.paths import resolve_path
+
     try:
         name = resolve_best_model_name()
     except FileNotFoundError:
-        pytest.skip("optimization results not found")
-    assert name in {"gradient_boosting", "logistic_regression", "decision_tree"}
+        pytest.skip("ranking or optimization results not found")
+
+    ranking_path = resolve_path("results/baseline_ranking.csv")
+    if ranking_path.is_file():
+        ranking = pd.read_csv(ranking_path).sort_values("rank")
+        assert name == ranking.iloc[0]["model_name"]
+    else:
+        after = resolve_path("results/hyperparameter_after_optimization.csv")
+        best = pd.read_csv(after).sort_values("roc_auc_mean", ascending=False)
+        assert name == best.iloc[0]["model_name"]

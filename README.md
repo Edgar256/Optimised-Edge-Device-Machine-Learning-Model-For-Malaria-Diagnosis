@@ -107,7 +107,34 @@ Creates triage-safe engineered features (separate from baseline training feature
 
 > Baseline training uses the preprocessing pipeline output (56 encoded features), not the engineered dataset.
 
-### 7. Train baseline models
+### 7. Clear past results (before retraining)
+
+Run this **before** training again (for example after adding more data) so old models, metrics, and reports do not mix with the new run:
+
+```bash
+python main.py clean-artifacts
+```
+
+Deletes contents of:
+
+- `models/` (baseline and optimized artifacts)
+- `results/` (metrics CSVs and manifests)
+- `figures/` (ROC curves, confusion matrices)
+- `reports/` (training, explainability, and Chapter 4 outputs)
+
+Preserves `data/raw/`, `data/processed/`, and `.gitkeep` placeholders.
+
+Useful options:
+
+```bash
+python main.py clean-artifacts --dry-run              # preview only
+python main.py clean-artifacts --verbose              # list each path
+python main.py clean-artifacts --include-processed    # also clear data/processed/
+```
+
+Use `--include-processed` when you will re-run `preprocess` as well (recommended after a dataset update).
+
+### 8. Train baseline models
 
 ```bash
 python main.py train-baselines
@@ -121,7 +148,7 @@ Trains seven baseline classifiers with stratified 5-fold CV and writes:
 - `figures/` (ROC curves, confusion matrices)
 - `reports/baseline_training_report.md`
 
-### 8. Hyperparameter optimization
+### 9. Hyperparameter optimization
 
 ```bash
 python main.py optimize-models
@@ -135,7 +162,7 @@ Runs `RandomizedSearchCV` on the top-ranked optimizable models and writes:
 - `results/hyperparameter_comparison.csv`
 - `reports/hyperparameter_optimization_report.md`
 
-### 9. Explain the best model
+### 10. Explain the best model
 
 ```bash
 python main.py explain-model
@@ -147,7 +174,7 @@ Generates SHAP, permutation importance, PDPs, and symptom rankings:
 - `reports/explainability/figures/`
 - `reports/explainability/tables/`
 
-### 10. Generate Chapter 4 thesis tables
+### 11. Generate Chapter 4 thesis tables
 
 ```bash
 python main.py generate-chapter4-tables
@@ -159,7 +186,7 @@ Exports all seven Chapter 4 tables as CSV and publication-quality PNG figures:
 - `reports/chapter4/figures/` (PNG with captions)
 - `reports/chapter4/manifest.json`
 
-### 11. Run the offline prediction API
+### 12. Run the offline prediction API
 
 Requires steps 5, 7, and 8 to have been completed (preprocessing pipeline + optimized model on disk).
 
@@ -168,6 +195,8 @@ python main.py serve-api
 ```
 
 Starts the FastAPI server (default: `http://0.0.0.0:8000`).
+
+**Model selection:** by default the API **auto-selects rank 1** from `results/baseline_ranking.csv` (composite clinical / edge score from `train-baselines`). It loads the **optimized** artifact from `models/optimized/` when present, otherwise the baseline. If ranking is missing, it falls back to highest `roc_auc_mean` in `results/hyperparameter_after_optimization.csv`. Check `GET /health` for the loaded `model_name`. To pin a specific model, set `api.model_name` in `config/default.yaml`.
 
 | Endpoint | URL |
 |----------|-----|
@@ -204,7 +233,7 @@ Custom host/port:
 python main.py serve-api --host 127.0.0.1 --port 8000
 ```
 
-### 12. Run tests
+### 13. Run tests
 
 ```bash
 pytest
@@ -226,12 +255,26 @@ python main.py generate-chapter4-tables
 python main.py serve-api
 ```
 
+### Retrain after new data (same columns)
+
+```bash
+python main.py clean-artifacts --include-processed
+python main.py validate
+python main.py preprocess
+python main.py train-baselines
+python main.py optimize-models
+python main.py explain-model
+python main.py generate-chapter4-tables
+python main.py serve-api
+```
+
 ## CLI reference
 
 | Command | Description |
 |---------|-------------|
 | `info` | Print project metadata and paths |
 | `validate` | Validate raw data schema |
+| `clean-artifacts` | Delete past models, results, figures, and reports |
 | `audit` | Data quality audit report |
 | `preprocess` | Fit preprocessing pipeline |
 | `engineer-features` | Triage-safe feature engineering |

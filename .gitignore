@@ -27,6 +27,7 @@ reports/*
 !reports/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+catboost_info/
 
 # IDE & OS
 .idea/
