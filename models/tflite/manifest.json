@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "latest_version": "1.0.0",
+  "model_name": "logistic_regression",
+  "updated_at_utc": "2026-07-04T15:36:18.975593+00:00",
+  "min_app_version": "1.0.0",
+  "releases": {
+    "1.0.0": {
+      "model_path": "models/tflite/v1.0.0/model.tflite",
+      "feature_spec_path": "models/tflite/v1.0.0/feature_spec.json",
+      "metadata_path": "models/tflite/v1.0.0/metadata.json",
+      "model_sha256": "ad721ded766ee320044258beb86902b893cf4da9446c6960a8635e07d2e0882e",
+      "feature_spec_sha256": "de92762d37acc4a4550c0dd39ee1e5e12c80368cfb6933d405011567bd08f76a",
+      "min_app_version": "1.0.0",
+      "release_notes": "Initial GitHub-versioned TFLite release for React Native",
+      "created_at_utc": "2026-07-04T15:36:18.975593+00:00"
+    }
+  }
+}

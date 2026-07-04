@@ -1,0 +1,20 @@
+{
+  "version": "1.0.0",
+  "model_name": "logistic_regression",
+  "created_at_utc": "2026-07-04T15:36:18.975593+00:00",
+  "git_sha": "7741b6fba36f6df012b689f4dd56ae6038a3f826",
+  "n_features": 71,
+  "max_parity_error": 3.280321247967066e-08,
+  "parity_tolerance": 0.0001,
+  "model_sha256": "ad721ded766ee320044258beb86902b893cf4da9446c6960a8635e07d2e0882e",
+  "feature_spec_sha256": "de92762d37acc4a4550c0dd39ee1e5e12c80368cfb6933d405011567bd08f76a",
+  "metrics": {
+    "source": "hyperparameter_after_optimization",
+    "roc_auc_mean": 0.9825938264166992,
+    "recall_mean": 0.8827586206896552,
+    "f1_mean": 0.9202902706053068,
+    "accuracy_mean": 0.9739363200901664
+  },
+  "release_notes": "Initial GitHub-versioned TFLite release for React Native",
+  "min_app_version": "1.0.0"
+}

@@ -134,28 +134,38 @@ def _extract_lr_pipeline(estimator: Any) -> tuple[StandardScaler, LogisticRegres
     )
 
 
-def _build_keras_lr_model(scaler: StandardScaler, model: LogisticRegression):
-    import tensorflow as tf
-
-    n_features = int(scaler.mean_.shape[0])
-    mean = scaler.mean_.astype(np.float32)
-    scale = np.where(scaler.scale_ == 0, 1.0, scaler.scale_).astype(np.float32)
-    coef = model.coef_.astype(np.float32).reshape(n_features, 1)
+def _bake_scaler_into_lr_weights(
+    scaler: StandardScaler, model: LogisticRegression
+) -> tuple[np.ndarray, float]:
+    """Fold StandardScaler into LR weights: logit = x @ w + b with sigmoid(logit)."""
+    mean = scaler.mean_.astype(np.float64)
+    scale = np.where(scaler.scale_ == 0, 1.0, scaler.scale_).astype(np.float64)
+    coef = model.coef_.astype(np.float64).ravel()
     intercept = float(model.intercept_.ravel()[0])
-
-    inputs = tf.keras.Input(shape=(n_features,), dtype=tf.float32, name="features")
-    scaled = (inputs - mean) / scale
-    logits = tf.linalg.matmul(scaled, coef) + intercept
-    outputs = tf.nn.sigmoid(logits, name="malaria_probability")
-    return tf.keras.Model(inputs=inputs, outputs=outputs, name="malaria_logistic_regression")
+    # ((x - mean) / scale) @ coef + intercept
+    # = x @ (coef / scale) + (intercept - mean @ (coef / scale))
+    weights = (coef / scale).astype(np.float32)
+    bias = float(intercept - np.dot(mean, coef / scale))
+    return weights, bias
 
 
 def convert_lr_pipeline_to_tflite(scaler: StandardScaler, model: LogisticRegression) -> bytes:
     """Convert a fitted scaler + logistic regression pipeline head to TFLite bytes."""
     import tensorflow as tf
 
-    keras_model = _build_keras_lr_model(scaler, model)
-    converter = tf.lite.TFLiteConverter.from_keras_model(keras_model)
+    n_features = int(scaler.mean_.shape[0])
+    weights, bias = _bake_scaler_into_lr_weights(scaler, model)
+    # Pure TF constants avoid Keras variable / TFLite converter issues.
+    kernel = tf.constant(weights.reshape(n_features, 1), dtype=tf.float32)
+    intercept = tf.constant([[bias]], dtype=tf.float32)
+
+    @tf.function(input_signature=[tf.TensorSpec(shape=[None, n_features], dtype=tf.float32, name="features")])
+    def predict_fn(features: tf.Tensor) -> tf.Tensor:
+        logits = tf.matmul(features, kernel) + intercept
+        return tf.nn.sigmoid(logits, name="malaria_probability")
+
+    concrete_fn = predict_fn.get_concrete_function()
+    converter = tf.lite.TFLiteConverter.from_concrete_functions([concrete_fn], predict_fn)
     converter.optimizations = []
     return converter.convert()
 
