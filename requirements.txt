@@ -21,3 +21,6 @@ ruff>=0.3
 # xgboost>=2.0
 # lightgbm>=4.0
 # catboost>=1.2
+
+# Optional TFLite export for React Native (pip install 'malaria-edge-ml[tflite]' or:)
+# tensorflow>=2.15

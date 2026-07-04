@@ -10,6 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.deployment.api import create_app
+from src.deployment.tflite_export import export_tflite_model
 from src.evaluation.chapter4_tables import write_chapter4_tables
 from src.evaluation.explainability import write_explainability_outputs
 from src.features.engineering import write_feature_engineering_outputs
@@ -175,6 +176,41 @@ def _cmd_clean_artifacts(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_export_tflite(args: argparse.Namespace) -> int:
+    config = load_config()
+    tflite_cfg = config.get("tflite", {})
+    try:
+        result = export_tflite_model(
+            version=args.version,
+            bump=args.bump,
+            model_name=args.model_name,
+            config=config,
+            min_app_version=args.min_app_version or tflite_cfg.get("min_app_version", "1.0.0"),
+            release_notes=args.release_notes or "",
+        )
+    except (ModuleNotFoundError, ImportError) as exc:
+        if "tensorflow" in str(exc).lower():
+            print(
+                "ERROR: TensorFlow is required for TFLite export. "
+                "Install with: pip install 'malaria-edge-ml[tflite]' or pip install tensorflow",
+                file=sys.stderr,
+            )
+            return 1
+        raise
+    except (FileNotFoundError, ValueError, RuntimeError) as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+
+    print(f"TFLite version   : v{result.version}")
+    print(f"Model            : {result.model_name}")
+    print(f"Release dir      : {result.stats['output_dir']}")
+    print(f"Manifest         : {result.stats['manifest_path']}")
+    print(f"Model SHA-256    : {result.stats['model_sha256']}")
+    print(f"Parity max error : {result.max_parity_error:.2e}")
+    print("Commit models/tflite/ and push so the React Native app can update.")
+    return 0
+
+
 def _cmd_serve_api(args: argparse.Namespace) -> int:
     import uvicorn
 
@@ -308,6 +344,38 @@ def build_parser() -> argparse.ArgumentParser:
         help="Output directory (default: reports/chapter4).",
     )
     chapter4_parser.set_defaults(func=_cmd_generate_chapter4_tables)
+
+    tflite_parser = subparsers.add_parser(
+        "export-tflite",
+        help="Export the selected optimized model to versioned TFLite artifacts for React Native.",
+    )
+    tflite_parser.add_argument(
+        "--version",
+        default=None,
+        help="Explicit semver (e.g. 1.0.1). Overrides --bump.",
+    )
+    tflite_parser.add_argument(
+        "--bump",
+        choices=["major", "minor", "patch"],
+        default="patch",
+        help="Semver bump when --version is omitted (default: patch).",
+    )
+    tflite_parser.add_argument(
+        "--model-name",
+        default=None,
+        help="Model to export (default: baseline rank-1; must be logistic_regression).",
+    )
+    tflite_parser.add_argument(
+        "--min-app-version",
+        default=None,
+        help="Minimum React Native app version required for this model release.",
+    )
+    tflite_parser.add_argument(
+        "--release-notes",
+        default="",
+        help="Optional release notes stored in manifest/metadata.",
+    )
+    tflite_parser.set_defaults(func=_cmd_export_tflite)
 
     serve_parser = subparsers.add_parser(
         "serve-api",

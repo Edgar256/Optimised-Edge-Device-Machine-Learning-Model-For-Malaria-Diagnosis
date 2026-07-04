@@ -16,6 +16,7 @@ from src.deployment.schemas import (
     PredictionResponse,
     SymptomsInput,
 )
+from src.deployment.tflite_export import TfliteExportResult, bump_semver, export_tflite_model
 
 __all__ = [
     "DiagnosticResult",
@@ -25,9 +26,12 @@ __all__ = [
     "PredictionRequest",
     "PredictionResponse",
     "SymptomsInput",
+    "TfliteExportResult",
     "app",
     "build_inference_dataframe",
+    "bump_semver",
     "create_app",
+    "export_tflite_model",
     "load_predictor_artifacts",
     "predict_malaria",
     "transform_for_inference",

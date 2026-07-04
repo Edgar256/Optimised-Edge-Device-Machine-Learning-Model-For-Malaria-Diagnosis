@@ -186,9 +186,61 @@ Exports all seven Chapter 4 tables as CSV and publication-quality PNG figures:
 - `reports/chapter4/figures/` (PNG with captions)
 - `reports/chapter4/manifest.json`
 
-### 12. Run the offline prediction API
+### 12. Export versioned TFLite model (React Native / Android)
 
-Requires steps 5, 7, and 8 to have been completed (preprocessing pipeline + optimized model on disk).
+Requires steps 5, 8, and 9 (preprocess + train + optimize) and TensorFlow:
+
+```bash
+pip install tensorflow
+python main.py export-tflite --bump patch
+```
+
+Exports the **baseline rank-1** model when it is `logistic_regression` (override with `--model-name logistic_regression` if needed) to:
+
+```text
+models/tflite/
+  manifest.json
+  v1.0.0/
+    model.tflite
+    feature_spec.json
+    metadata.json
+```
+
+Versioning options:
+
+```bash
+python main.py export-tflite --bump patch
+python main.py export-tflite --bump minor
+python main.py export-tflite --version 1.2.0 --release-notes "Retrain on expanded cohort"
+```
+
+Commit and push so the mobile app can update:
+
+```bash
+git add models/tflite/
+git commit -m "release(tflite): v1.0.0 logistic_regression"
+git push origin dev
+```
+
+#### React Native model update contract
+
+The app should treat GitHub as the model update channel (offline-first):
+
+1. **Bundle** a fallback `models/tflite/vX.Y.Z/` at build time.
+2. **On launch / periodically**, fetch:
+   `https://raw.githubusercontent.com/Edgar256/Optimised-Edge-Device-Machine-Learning-Model-For-Malaria-Diagnosis/dev/models/tflite/manifest.json`
+3. If `latest_version` is newer than the local version and `min_app_version` is satisfied:
+   - download `model.tflite` and `feature_spec.json` from the release paths in `manifest.releases`
+   - verify `model_sha256` / `feature_spec_sha256`
+   - store under the app documents directory and activate the new version
+4. If the network is unavailable, keep using the local/bundled model.
+5. Build the feature vector **only** from `feature_spec.json` (feature order, categories, imputers, defaults, risk thresholds).
+
+Version policy: **patch** = retrain same schema; **minor** = compatible feature_spec changes; **major** = breaking feature layout (raise `min_app_version`).
+
+### 13. Run the offline prediction API
+
+Requires steps 5, 8, and 9 to have been completed (preprocessing pipeline + optimized model on disk).
 
 ```bash
 python main.py serve-api
@@ -233,7 +285,7 @@ Custom host/port:
 python main.py serve-api --host 127.0.0.1 --port 8000
 ```
 
-### 13. Run tests
+### 14. Run tests
 
 ```bash
 pytest
@@ -252,6 +304,7 @@ python main.py train-baselines
 python main.py optimize-models
 python main.py explain-model
 python main.py generate-chapter4-tables
+python main.py export-tflite --bump patch
 python main.py serve-api
 ```
 
@@ -265,8 +318,11 @@ python main.py train-baselines
 python main.py optimize-models
 python main.py explain-model
 python main.py generate-chapter4-tables
+python main.py export-tflite --bump patch
 python main.py serve-api
 ```
+
+Then commit `models/tflite/` and push so the React Native app can pick up the new version.
 
 ## CLI reference
 
@@ -282,6 +338,7 @@ python main.py serve-api
 | `optimize-models` | RandomizedSearchCV on top models |
 | `explain-model` | SHAP, permutation importance, PDPs |
 | `generate-chapter4-tables` | Thesis tables (CSV + PNG) |
+| `export-tflite` | Versioned TFLite export for React Native |
 | `serve-api` | Offline FastAPI prediction server |
 
 ## Configuration

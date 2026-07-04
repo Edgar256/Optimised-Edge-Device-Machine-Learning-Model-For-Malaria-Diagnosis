@@ -131,3 +131,9 @@ api:
 
 chapter4:
   output_dir: reports/chapter4
+
+tflite:
+  output_dir: models/tflite
+  # Optional pin; default = auto-select baseline rank-1 (must be logistic_regression for TFLite).
+  # model_name: logistic_regression
+  min_app_version: "1.0.0"

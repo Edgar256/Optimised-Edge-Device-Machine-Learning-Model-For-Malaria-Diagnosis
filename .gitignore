@@ -18,8 +18,11 @@ env/
 
 # ML artifacts (tracked structure, not binary outputs)
 # results/ and reports/ are versioned for thesis reproducibility.
+# TFLite releases under models/tflite/ are versioned for mobile OTA updates.
 models/*
 !models/.gitkeep
+!models/tflite/
+!models/tflite/**
 figures/*
 !figures/.gitkeep
 data/processed/*

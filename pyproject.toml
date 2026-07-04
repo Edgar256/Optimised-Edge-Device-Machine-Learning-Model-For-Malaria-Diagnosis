@@ -31,6 +31,9 @@ dev = [
     "pytest-cov>=4.1",
     "ruff>=0.3",
 ]
+tflite = [
+    "tensorflow>=2.15",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
