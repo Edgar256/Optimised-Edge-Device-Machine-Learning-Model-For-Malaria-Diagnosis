@@ -244,6 +244,40 @@ def _cmd_init_db(_: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_check_db(_: argparse.Namespace) -> int:
+    """Test DATABASE_URL connectivity and schema setup (for Render/Cloudsters debugging)."""
+    from sqlalchemy.exc import OperationalError
+
+    from src.database.errors import format_operational_error, operational_error_tips
+    from src.database.session import init_db, reset_engine
+    from src.utils.env import describe_database_target, get_database_url, get_mysql_connect_args
+
+    database_url = get_database_url()
+    if not database_url:
+        print("ERROR: DATABASE_URL is not set. Add it to .env or export it.", file=sys.stderr)
+        return 1
+
+    print(f"Target: {describe_database_target()}")
+    if get_mysql_connect_args():
+        print("SSL: enabled (ssl=true or ssl_mode=REQUIRED in DATABASE_URL)")
+
+    reset_engine()
+    try:
+        applied = init_db()
+    except OperationalError as exc:
+        print(f"ERROR: {format_operational_error(exc)}", file=sys.stderr)
+        print(operational_error_tips(exc), file=sys.stderr)
+        return 1
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+
+    print("Connection OK. Tables created/migrated successfully.")
+    for message in applied:
+        print(f"Applied migration: {message}")
+    return 0
+
+
 def _cmd_dev(args: argparse.Namespace) -> int:
     """Start the FastAPI backend and React admin dashboard together."""
     import os
@@ -494,6 +528,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="Create database tables for users and patient records (requires DATABASE_URL).",
     )
     init_db_parser.set_defaults(func=_cmd_init_db)
+
+    check_db_parser = subparsers.add_parser(
+        "check-db",
+        help="Test DATABASE_URL connectivity before deploying to Render.",
+    )
+    check_db_parser.set_defaults(func=_cmd_check_db)
 
     dev_parser = subparsers.add_parser(
         "dev",

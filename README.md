@@ -324,11 +324,42 @@ After deploy:
 
 Tables are created/migrated automatically on startup, or run `python main.py init-db` once against your MySQL instance.
 
-**MySQL on Render:** Render web services do not include MySQL. Use an external provider (PlanetScale, Aiven, Railway MySQL, etc.) and paste its connection URL into Render **Environment** as `DATABASE_URL`. If you see `Access denied for user ... (1045)`:
+**MySQL on Render (CloudClusters / Cloudsters):** Use the hostname, port, and credentials from your CloudClusters dashboard — not a raw server IP or port 3306.
 
-1. Confirm username and password in the Render env var match the hosted database (not your local `.env` with `localhost`).
-2. Grant remote access: `CREATE USER 'admin'@'%' IDENTIFIED BY 'your-password'; GRANT ALL ON malaria_prediction.* TO 'admin'@'%'; FLUSH PRIVILEGES;`
-3. URL-encode special characters in the password (`@` → `%40`, `#` → `%23`).
+Provider docs example:
+
+```bash
+mysql -h mysql-202816-0.cloudclusters.net -P 19889 -u admin -p<Password>
+```
+
+Convert to `DATABASE_URL` for Render **Environment**:
+
+```
+mysql://admin:YOUR_PASSWORD@mysql-202816-0.cloudclusters.net:19889/malaria_data_db?ssl=true&ssl_verify=false
+```
+
+| Field | CloudClusters value |
+|-------|---------------------|
+| Host | `mysql-202816-0.cloudclusters.net` (from your dashboard) |
+| Port | `19889` (not 3306) |
+| User | `admin` |
+| Database | `malaria_data_db` |
+| SSL | `?ssl=true&ssl_verify=false` (self-signed cert) |
+
+Do **not** use `163.123.183.83`, port `3306`, or user `m4l4r14_us3r`.
+
+**Test before deploying:**
+
+```bash
+export DATABASE_URL='mysql://admin:YOUR_PASSWORD@mysql-202816-0.cloudclusters.net:19889/malaria_data_db?ssl=true&ssl_verify=false'
+python main.py check-db
+```
+
+Paste the same URL into Render → Environment → `DATABASE_URL` → Save → Manual Deploy.
+
+**1045 Access denied:** Wrong password — copy the exact `admin` password from CloudClusters.
+
+**2003 Can't connect:** Wrong host/port, or add `?ssl=true&ssl_verify=false`.
 
 ### 14. User accounts and patient records
 

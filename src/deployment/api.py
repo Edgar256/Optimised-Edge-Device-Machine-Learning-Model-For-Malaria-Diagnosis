@@ -83,12 +83,10 @@ async def lifespan(_: FastAPI):
         try:
             init_db()
         except OperationalError as exc:
+            from src.database.errors import database_startup_error_message
+
             raise RuntimeError(
-                "Database connection failed during startup. "
-                f"Target: {describe_database_target()}. "
-                "On Render, DATABASE_URL must use a hosted MySQL hostname (not localhost), "
-                "correct username/password, and a user granted remote access (e.g. 'user'@'%'). "
-                "URL-encode special characters in the password (@ → %40, # → %23)."
+                database_startup_error_message(exc, describe_database_target())
             ) from exc
     yield
     set_predictor_artifacts(None)

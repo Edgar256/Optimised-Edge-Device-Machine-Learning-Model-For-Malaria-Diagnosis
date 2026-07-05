@@ -3,43 +3,92 @@
 from __future__ import annotations
 
 import os
+import ssl
 from functools import lru_cache
 
 from dotenv import load_dotenv
 
 from src.utils.paths import find_project_root
 
+# Query params handled via connect_args instead of the SQLAlchemy URL.
+_MYSQL_SSL_QUERY_KEYS = frozenset({"ssl", "ssl_mode", "ssl_verify"})
+
+# Hosted DB URLs may include pool hints that pymysql.connect() rejects.
+_MYSQL_UNSUPPORTED_QUERY_KEYS = frozenset(
+    {
+        "connection_limit",
+        "pool_timeout",
+        "pgbouncer",
+        "sslaccept",
+        *_MYSQL_SSL_QUERY_KEYS,
+    }
+)
+
 
 def _load_dotenv() -> None:
     load_dotenv(find_project_root() / ".env", override=False)
 
 
-def normalize_database_url(url: str) -> str:
-    """Convert shorthand mysql:// URLs and drop pymysql-incompatible query params."""
+def _parse_mysql_url(url: str):
     from sqlalchemy.engine import make_url
 
     if url.startswith("mysql://"):
         url = "mysql+pymysql://" + url[len("mysql://") :]
+    return make_url(url)
 
-    parsed = make_url(url)
+
+def _mysql_ssl_verify(query: dict[str, str]) -> bool:
+    ssl_verify = query.get("ssl_verify", "true").lower()
+    return ssl_verify not in {"false", "0", "no"}
+
+
+def _mysql_ssl_enabled(query: dict[str, str]) -> bool:
+    ssl_value = query.get("ssl", "").lower()
+    ssl_mode = query.get("ssl_mode", "").lower()
+    if ssl_value in {"true", "1", "yes"}:
+        return True
+    return ssl_mode in {"required", "verify_ca", "verify_identity"}
+
+
+def _build_mysql_ssl_context(query: dict[str, str]) -> ssl.SSLContext:
+    context = ssl.create_default_context()
+    if not _mysql_ssl_verify(query):
+        context.check_hostname = False
+        context.verify_mode = ssl.CERT_NONE
+    return context
+
+
+def normalize_database_url(url: str) -> str:
+    """Convert shorthand mysql:// URLs and drop pymysql-incompatible query params."""
+    parsed = _parse_mysql_url(url)
     driver = parsed.drivername.split("+", 1)[0]
     if driver != "mysql":
         return url
 
-    # Hosted DB URLs (Render, PlanetScale, etc.) may include pool hints that
-    # SQLAlchemy forwards to pymysql.connect(), which rejects them.
-    unsupported = frozenset(
-        {
-            "connection_limit",
-            "pool_timeout",
-            "pgbouncer",
-            "sslaccept",
-        }
-    )
     if parsed.query:
-        filtered = {key: value for key, value in parsed.query.items() if key not in unsupported}
+        filtered = {
+            key: value
+            for key, value in parsed.query.items()
+            if key not in _MYSQL_UNSUPPORTED_QUERY_KEYS
+        }
         parsed = parsed.set(query=filtered)
     return str(parsed)
+
+
+def get_mysql_connect_args(url: str | None = None) -> dict:
+    """Return pymysql connect_args (e.g. SSL) derived from DATABASE_URL query params."""
+    raw = (url or os.getenv("DATABASE_URL", "")).strip()
+    if not raw.startswith(("mysql://", "mysql+pymysql://")):
+        return {}
+
+    parsed = _parse_mysql_url(raw)
+    if parsed.drivername.split("+", 1)[0] != "mysql":
+        return {}
+
+    query = dict(parsed.query or {})
+    if _mysql_ssl_enabled(query):
+        return {"ssl": _build_mysql_ssl_context(query)}
+    return {}
 
 
 def describe_database_target(url: str | None = None) -> str:
@@ -55,7 +104,8 @@ def describe_database_target(url: str | None = None) -> str:
         host = f"{host} (will not work on Render — use a hosted MySQL URL)"
     database = parsed.database or "unknown-database"
     username = parsed.username or "unknown-user"
-    return f"user={username} host={host} database={database}"
+    port = parsed.port or 3306
+    return f"user={username} host={host} port={port} database={database}"
 
 
 @lru_cache(maxsize=1)

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from src.database.base import Base
-from src.utils.env import get_database_url
+from src.utils.env import get_database_url, get_mysql_connect_args
 
 _engine = None
 _SessionLocal: sessionmaker[Session] | None = None
@@ -28,6 +28,10 @@ def _get_engine():
             engine_kwargs["connect_args"] = {"check_same_thread": False}
             if database_url.endswith(":memory:") or database_url.rstrip("/").endswith(":memory:"):
                 engine_kwargs["poolclass"] = StaticPool
+        else:
+            mysql_connect_args = get_mysql_connect_args()
+            if mysql_connect_args:
+                engine_kwargs["connect_args"] = mysql_connect_args
         _engine = create_engine(database_url, **engine_kwargs)
         _SessionLocal = sessionmaker(bind=_engine, autocommit=False, autoflush=False)
     return _engine
