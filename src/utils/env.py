@@ -42,6 +42,22 @@ def normalize_database_url(url: str) -> str:
     return str(parsed)
 
 
+def describe_database_target(url: str | None = None) -> str:
+    """Return a log-safe summary of the configured database target."""
+    from sqlalchemy.engine import make_url
+
+    raw = url or get_database_url()
+    if not raw:
+        return "DATABASE_URL is not set"
+    parsed = make_url(raw)
+    host = parsed.host or "unknown-host"
+    if host in {"localhost", "127.0.0.1"}:
+        host = f"{host} (will not work on Render — use a hosted MySQL URL)"
+    database = parsed.database or "unknown-database"
+    username = parsed.username or "unknown-user"
+    return f"user={username} host={host} database={database}"
+
+
 @lru_cache(maxsize=1)
 def get_database_url() -> str | None:
     _load_dotenv()

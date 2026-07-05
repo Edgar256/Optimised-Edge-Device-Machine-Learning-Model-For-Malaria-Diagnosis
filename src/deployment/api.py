@@ -75,9 +75,21 @@ async def lifespan(_: FastAPI):
             f"(exists={pipeline_path.is_file()}). Project root={root}."
         ) from exc
     if get_database_url():
-        from src.database.session import init_db
+        from sqlalchemy.exc import OperationalError
 
-        init_db()
+        from src.database.session import init_db
+        from src.utils.env import describe_database_target
+
+        try:
+            init_db()
+        except OperationalError as exc:
+            raise RuntimeError(
+                "Database connection failed during startup. "
+                f"Target: {describe_database_target()}. "
+                "On Render, DATABASE_URL must use a hosted MySQL hostname (not localhost), "
+                "correct username/password, and a user granted remote access (e.g. 'user'@'%'). "
+                "URL-encode special characters in the password (@ → %40, # → %23)."
+            ) from exc
     yield
     set_predictor_artifacts(None)
 

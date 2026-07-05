@@ -1,6 +1,6 @@
 """Tests for environment helpers."""
 
-from src.utils.env import normalize_database_url
+from src.utils.env import describe_database_target, normalize_database_url
 
 
 def test_normalize_database_url_converts_mysql_scheme() -> None:
@@ -15,3 +15,10 @@ def test_normalize_database_url_strips_connection_limit() -> None:
     )
     assert "connection_limit" not in url
     assert "charset=utf8mb4" in url
+
+
+def test_describe_database_target_flags_localhost_on_render() -> None:
+    summary = describe_database_target("mysql://admin:secret@localhost:3306/malaria_prediction")
+    assert "user=admin" in summary
+    assert "localhost" in summary
+    assert "will not work on Render" in summary

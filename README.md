@@ -310,7 +310,7 @@ Or connect the repo to [`render.yaml`](render.yaml) at the project root — Rend
 
 **Environment variables** (Render dashboard → Environment):
 
-- `DATABASE_URL` — MySQL connection string
+- `DATABASE_URL` — hosted MySQL connection string (**not** `localhost` on Render)
 - `JWT_SECRET` — token signing secret
 - `ADMIN_REGISTRATION_SECRET` — required for admin signup
 
@@ -323,6 +323,12 @@ After deploy:
 - OpenAPI: `https://<your-service>.onrender.com/docs`
 
 Tables are created/migrated automatically on startup, or run `python main.py init-db` once against your MySQL instance.
+
+**MySQL on Render:** Render web services do not include MySQL. Use an external provider (PlanetScale, Aiven, Railway MySQL, etc.) and paste its connection URL into Render **Environment** as `DATABASE_URL`. If you see `Access denied for user ... (1045)`:
+
+1. Confirm username and password in the Render env var match the hosted database (not your local `.env` with `localhost`).
+2. Grant remote access: `CREATE USER 'admin'@'%' IDENTIFIED BY 'your-password'; GRANT ALL ON malaria_prediction.* TO 'admin'@'%'; FLUSH PRIVILEGES;`
+3. URL-encode special characters in the password (`@` → `%40`, `#` → `%23`).
 
 ### 14. User accounts and patient records
 
