@@ -20,14 +20,19 @@ env/
 # ML artifacts (tracked structure, not binary outputs)
 # results/ and reports/ are versioned for thesis reproducibility.
 # TFLite releases under models/tflite/ are versioned for mobile OTA updates.
+# Deployment API artifacts (models/optimized/logistic_regression.joblib,
+# data/processed/preprocessing_pipeline.joblib) are versioned for Render inference.
 models/*
 !models/.gitkeep
+!models/optimized/
+!models/optimized/logistic_regression.joblib
 !models/tflite/
 !models/tflite/**
 figures/*
 !figures/.gitkeep
 data/processed/*
 !data/processed/.gitkeep
+!data/processed/preprocessing_pipeline.joblib
 catboost_info/
 
 # IDE & OS

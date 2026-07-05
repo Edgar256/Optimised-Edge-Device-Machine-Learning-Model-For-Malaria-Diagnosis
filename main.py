@@ -212,12 +212,14 @@ def _cmd_export_tflite(args: argparse.Namespace) -> int:
 
 
 def _cmd_serve_api(args: argparse.Namespace) -> int:
+    import os
+
     import uvicorn
 
     config = load_config()
     api_cfg = config.get("api", {})
     host = args.host or api_cfg.get("host", "0.0.0.0")
-    port = args.port or int(api_cfg.get("port", 8000))
+    port = args.port or int(os.environ.get("PORT", api_cfg.get("port", 8000)))
 
     print(f"Starting offline API on http://{host}:{port}")
     print(f"Health check     : http://{host}:{port}/health")

@@ -279,6 +279,23 @@ curl -X POST http://localhost:8000/v1/predict \
 
 For Android on the same LAN, use `http://<device-ip>:8000/v1/predict`. No cloud services are required.
 
+#### Deploy to Render
+
+The API needs these versioned artifacts in the repo (committed after `optimize-models`):
+
+- `models/optimized/logistic_regression.joblib`
+- `data/processed/preprocessing_pipeline.joblib`
+
+| Render setting | Value |
+|----------------|-------|
+| Python version | `3.12` (or use root `runtime.txt`) |
+| Build command | `pip install -r requirements.txt` |
+| Start command | `uvicorn src.deployment.api:app --host 0.0.0.0 --port $PORT` |
+
+`python main.py serve-api` also works on Render — it reads the `PORT` environment variable automatically.
+
+After deploy, verify: `GET https://<your-service>.onrender.com/health` should return `"model_loaded": true`.
+
 Custom host/port:
 
 ```bash
