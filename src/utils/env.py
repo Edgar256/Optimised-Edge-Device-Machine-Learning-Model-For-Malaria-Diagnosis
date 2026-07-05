@@ -15,10 +15,31 @@ def _load_dotenv() -> None:
 
 
 def normalize_database_url(url: str) -> str:
-    """Convert shorthand mysql:// URLs to SQLAlchemy-compatible drivers."""
+    """Convert shorthand mysql:// URLs and drop pymysql-incompatible query params."""
+    from sqlalchemy.engine import make_url
+
     if url.startswith("mysql://"):
-        return "mysql+pymysql://" + url[len("mysql://") :]
-    return url
+        url = "mysql+pymysql://" + url[len("mysql://") :]
+
+    parsed = make_url(url)
+    driver = parsed.drivername.split("+", 1)[0]
+    if driver != "mysql":
+        return url
+
+    # Hosted DB URLs (Render, PlanetScale, etc.) may include pool hints that
+    # SQLAlchemy forwards to pymysql.connect(), which rejects them.
+    unsupported = frozenset(
+        {
+            "connection_limit",
+            "pool_timeout",
+            "pgbouncer",
+            "sslaccept",
+        }
+    )
+    if parsed.query:
+        filtered = {key: value for key, value in parsed.query.items() if key not in unsupported}
+        parsed = parsed.set(query=filtered)
+    return str(parsed)
 
 
 @lru_cache(maxsize=1)
