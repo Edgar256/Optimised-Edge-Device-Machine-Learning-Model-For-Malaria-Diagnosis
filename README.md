@@ -291,8 +291,20 @@ The API needs these versioned artifacts in the repo (committed after `optimize-m
 | Render setting | Value |
 |----------------|-------|
 | Python version | `3.12` (or use root `runtime.txt`) |
-| Build command | `pip install -r requirements.txt && cd frontend && npm ci && npm run build` |
-| Start command | `uvicorn src.deployment.api:app --host 0.0.0.0 --port $PORT` |
+| Build command | `bash scripts/render-build.sh` |
+| Start command | `bash scripts/render-start.sh` |
+
+Or paste the equivalent commands directly in Render **Settings**:
+
+```bash
+# Build
+pip install -r requirements.txt && cd frontend && npm ci && npm run build
+
+# Start (must use $PORT — do not use python main.py serve-api)
+uvicorn src.deployment.api:app --host 0.0.0.0 --port $PORT
+```
+
+Set **Python Version** to `3.12` (or add env var `PYTHON_VERSION=3.12.8`). Deploy the **`dev`** branch — it contains the model artifacts.
 
 Or connect the repo to [`render.yaml`](render.yaml) at the project root — Render will pick up the same build/start commands automatically.
 

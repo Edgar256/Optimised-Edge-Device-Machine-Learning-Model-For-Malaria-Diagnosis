@@ -218,8 +218,9 @@ def _cmd_serve_api(args: argparse.Namespace) -> int:
 
     config = load_config()
     api_cfg = config.get("api", {})
-    host = args.host or api_cfg.get("host", "0.0.0.0")
     port = args.port or int(os.environ.get("PORT", api_cfg.get("port", 8000)))
+    default_host = "0.0.0.0" if os.environ.get("PORT") else api_cfg.get("host", "0.0.0.0")
+    host = args.host or default_host
 
     print(f"Starting offline API on http://{host}:{port}")
     print(f"Health check     : http://{host}:{port}/health")

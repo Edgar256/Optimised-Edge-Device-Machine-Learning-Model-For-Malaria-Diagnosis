@@ -6,11 +6,22 @@ from pathlib import Path
 
 
 def find_project_root(start: Path | None = None) -> Path:
-    """Walk upward from *start* until a directory containing main.py is found."""
-    current = (start or Path.cwd()).resolve()
-    for candidate in [current, *current.parents]:
-        if (candidate / "main.py").is_file() and (candidate / "config").is_dir():
-            return candidate
+    """Walk upward until a directory containing main.py and config/ is found."""
+    anchors: list[Path] = []
+    if start is not None:
+        anchors.append(start.resolve())
+    anchors.append(Path.cwd().resolve())
+    # Fallback when the process cwd is not the repo root (e.g. some PaaS layouts).
+    anchors.append(Path(__file__).resolve())
+
+    seen: set[Path] = set()
+    for anchor in anchors:
+        for candidate in [anchor, *anchor.parents]:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+            if (candidate / "main.py").is_file() and (candidate / "config").is_dir():
+                return candidate
     raise FileNotFoundError(
         "Could not locate project root (expected main.py and config/ in the same directory)."
     )

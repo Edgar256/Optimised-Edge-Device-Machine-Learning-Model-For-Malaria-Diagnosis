@@ -3,9 +3,12 @@ services:
     name: malaria-edge-ml
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt && cd frontend && npm ci && npm run build
-    startCommand: uvicorn src.deployment.api:app --host 0.0.0.0 --port $PORT
+    branch: dev
+    buildCommand: bash scripts/render-build.sh
+    startCommand: bash scripts/render-start.sh
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"
       - key: DATABASE_URL
         sync: false
       - key: JWT_SECRET

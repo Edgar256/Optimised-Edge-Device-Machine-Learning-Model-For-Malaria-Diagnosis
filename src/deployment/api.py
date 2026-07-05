@@ -63,7 +63,17 @@ def _mount_frontend_dashboard(app: FastAPI) -> bool:
 
 @asynccontextmanager
 async def lifespan(_: FastAPI):
-    set_predictor_artifacts(load_predictor_artifacts())
+    try:
+        set_predictor_artifacts(load_predictor_artifacts())
+    except FileNotFoundError as exc:
+        root = find_project_root()
+        model_path = root / "models" / "optimized" / "logistic_regression.joblib"
+        pipeline_path = root / "data" / "processed" / "preprocessing_pipeline.joblib"
+        raise RuntimeError(
+            f"{exc} Deploy requires committed artifacts at {model_path} "
+            f"(exists={model_path.is_file()}) and {pipeline_path} "
+            f"(exists={pipeline_path.is_file()}). Project root={root}."
+        ) from exc
     if get_database_url():
         from src.database.session import init_db
 

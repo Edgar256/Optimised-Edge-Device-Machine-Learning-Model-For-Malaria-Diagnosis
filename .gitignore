@@ -24,7 +24,6 @@ env/
 # data/processed/preprocessing_pipeline.joblib) are versioned for Render inference.
 models/*
 !models/.gitkeep
-!models/optimized/
 !models/optimized/logistic_regression.joblib
 !models/tflite/
 !models/tflite/**
