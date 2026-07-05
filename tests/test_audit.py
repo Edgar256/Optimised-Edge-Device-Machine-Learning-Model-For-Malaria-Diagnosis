@@ -7,7 +7,7 @@ from src.preprocessing.audit import run_audit, write_audit_outputs
 
 def test_run_audit_returns_expected_shape() -> None:
     audit = run_audit()
-    assert audit.findings["shape"]["rows"] == 291
+    assert audit.findings["shape"]["rows"] == 903
     assert audit.findings["shape"]["columns"] == 37
     assert len(audit.summary) == 37
 

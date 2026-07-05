@@ -40,7 +40,7 @@ def test_run_preprocessing_reduces_rows_and_writes_artifacts(tmp_path: Path) -> 
 
     assert processed_path.is_file()
     assert pipeline_path.is_file()
-    assert result.stats["initial_rows"] == 291
+    assert result.stats["initial_rows"] == 903
     assert result.stats["final_rows"] < result.stats["initial_rows"]
     assert "target_binary" in result.cleaned_dataset.columns
     assert len(result.feature_names) > 0

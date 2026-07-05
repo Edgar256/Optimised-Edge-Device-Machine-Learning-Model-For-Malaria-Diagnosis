@@ -8,7 +8,7 @@ Master's thesis project: a production-oriented machine learning system for **bin
 | **Positive class** | `Malaria` |
 | **Negative class** | `Not malaria` |
 | **Modality** | Clinical intake / triage features (not blood-smear images) |
-| **Raw records** | 291 patient visits (Kobo export, semicolon-separated CSV) |
+| **Raw records** | 903 patient visits (`PATIENT_RECORD_DATA_EXTRACTION_FORM.csv`, semicolon-separated Kobo export) |
 
 ## Project layout
 
