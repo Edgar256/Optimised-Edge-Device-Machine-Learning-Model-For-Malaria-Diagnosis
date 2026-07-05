@@ -281,6 +281,8 @@ For Android on the same LAN, use `http://<device-ip>:8000/v1/predict`. No cloud 
 
 #### Deploy to Render
 
+One Render **Web Service** serves both the **FastAPI backend** and the **React admin dashboard** from the same URL. The build step compiles `frontend/`; FastAPI serves `frontend/dist/` with SPA fallback for `/login`, `/dashboard`, etc.
+
 The API needs these versioned artifacts in the repo (committed after `optimize-models`):
 
 - `models/optimized/logistic_regression.joblib`
@@ -289,12 +291,115 @@ The API needs these versioned artifacts in the repo (committed after `optimize-m
 | Render setting | Value |
 |----------------|-------|
 | Python version | `3.12` (or use root `runtime.txt`) |
-| Build command | `pip install -r requirements.txt` |
+| Build command | `pip install -r requirements.txt && cd frontend && npm ci && npm run build` |
 | Start command | `uvicorn src.deployment.api:app --host 0.0.0.0 --port $PORT` |
 
-`python main.py serve-api` also works on Render — it reads the `PORT` environment variable automatically.
+Or connect the repo to [`render.yaml`](render.yaml) at the project root — Render will pick up the same build/start commands automatically.
 
-After deploy, verify: `GET https://<your-service>.onrender.com/health` should return `"model_loaded": true`.
+**Environment variables** (Render dashboard → Environment):
+
+- `DATABASE_URL` — MySQL connection string
+- `JWT_SECRET` — token signing secret
+- `ADMIN_REGISTRATION_SECRET` — required for admin signup
+
+Do **not** set `VITE_API_URL` for combined deploy — the dashboard calls `/v1/...` on the same origin.
+
+After deploy:
+
+- Admin UI: `https://<your-service>.onrender.com/login`
+- API health: `GET https://<your-service>.onrender.com/health` → `"model_loaded": true`
+- OpenAPI: `https://<your-service>.onrender.com/docs`
+
+Tables are created/migrated automatically on startup, or run `python main.py init-db` once against your MySQL instance.
+
+### 14. User accounts and patient records
+
+Requires `DATABASE_URL` in `.env` (MySQL) and a one-time table setup:
+
+```bash
+cp .env.example .env   # edit DATABASE_URL, API_URL, JWT_SECRET, ADMIN_REGISTRATION_SECRET
+python main.py init-db
+python main.py serve-api
+```
+
+Each user has a `user_type`: `MEDICAL_PERSONNEL` (default, mobile app) or `ADMIN` (admin console).
+
+**Mobile app (medical personnel)** — use `API_URL` with:
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/v1/auth/signup` | POST | No | Register medical personnel |
+| `/v1/auth/login` | POST | No | Login; `"remember_me": true` for a 30-day token |
+| `/v1/auth/me` | GET | Bearer | Current user profile |
+| `/v1/patients` | POST | Bearer | Create patient visit (all Kobo CSV fields + latitude/longitude) |
+| `/v1/patients` | GET | Bearer | List your patient records |
+| `/v1/patients/{id}` | GET/PUT/DELETE | Bearer | Read, update, or delete a record |
+
+**Admin console** — separate registration and login:
+
+| Endpoint | Method | Auth | Description |
+|----------|--------|------|-------------|
+| `/v1/auth/admin/register` | POST | No | Register admin (requires `admin_registration_secret` matching `.env`) |
+| `/v1/auth/admin/login` | POST | No | Admin login only |
+| `/v1/auth/admin/me` | GET | Bearer (admin) | Admin profile |
+
+Medical personnel cannot use admin login, and admins cannot use mobile login.
+
+Medical signup example:
+
+```bash
+curl -X POST http://localhost:8000/v1/auth/signup \
+  -H "Content-Type: application/json" \
+  -d '{
+    "first_name": "Jane",
+    "last_name": "Nurse",
+    "email": "jane@example.com",
+    "phone": "+256700000001",
+    "job_title": "Clinical Officer",
+    "health_facility_name": "Kasomoro health centre",
+    "password": "securepass123"
+  }'
+```
+
+Login with remember-me:
+
+```bash
+curl -X POST http://localhost:8000/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "jane@example.com", "password": "securepass123", "remember_me": true}'
+```
+
+Use the returned `access_token` as `Authorization: Bearer <token>` for patient endpoints.
+
+Admin registration example:
+
+```bash
+curl -X POST http://localhost:8000/v1/auth/admin/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "first_name": "Alex",
+    "last_name": "Admin",
+    "email": "admin@example.com",
+    "phone": "+256700000099",
+    "job_title": "System Administrator",
+    "password": "securepass123",
+    "admin_registration_secret": "your-ADMIN_REGISTRATION_SECRET-from-env"
+  }'
+```
+
+Admin login:
+
+```bash
+curl -X POST http://localhost:8000/v1/auth/admin/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@example.com", "password": "securepass123", "remember_me": true}'
+```
+
+**Existing databases:** if you created tables before `user_type` was added, run:
+
+```sql
+ALTER TABLE users ADD COLUMN user_type VARCHAR(32) NOT NULL DEFAULT 'MEDICAL_PERSONNEL';
+```
 
 Custom host/port:
 
@@ -302,7 +407,52 @@ Custom host/port:
 python main.py serve-api --host 127.0.0.1 --port 8000
 ```
 
-### 14. Run tests
+### 15. Admin React dashboard
+
+The `frontend/` app is an admin console for registration, login, and district oversight.
+
+**One command (API + dashboard):**
+
+```bash
+python main.py dev
+```
+
+Starts the FastAPI backend on `http://127.0.0.1:8000` and the React dashboard on `http://localhost:5173`. Press `Ctrl+C` to stop both. Add `--reload` to auto-reload API code changes.
+
+Or run separately:
+
+```bash
+# Terminal 1 — API
+python main.py serve-api
+
+# Terminal 2 — dashboard (proxies /v1 to localhost:8000)
+cd frontend
+cp .env.example .env
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173` — register with your `ADMIN_REGISTRATION_SECRET`, then sign in.
+
+| Page | Route | Description |
+|------|-------|-------------|
+| Login | `/login` | Admin sign-in with remember-me |
+| Register | `/register` | Create admin account |
+| Overview | `/dashboard` | Patient counts, malaria stats, model status |
+| Patients | `/dashboard/patients` | Searchable list of all visits |
+| Patient detail | `/dashboard/patients/:id` | Full Kobo field view + GPS |
+| Users | `/dashboard/users` | Medical personnel and admins |
+| Profile | `/dashboard/profile` | Signed-in admin account |
+
+Production build (also run automatically on Render):
+
+```bash
+cd frontend && npm ci && npm run build
+```
+
+When `frontend/dist/` exists, `python main.py serve-api` serves the dashboard at `/` on the same port as the API — same behavior as Render production.
+
+### 16. Run tests
 
 ```bash
 pytest
@@ -357,6 +507,8 @@ Then commit `models/tflite/` and push so the React Native app can pick up the ne
 | `generate-chapter4-tables` | Thesis tables (CSV + PNG) |
 | `export-tflite` | Versioned TFLite export for React Native |
 | `serve-api` | Offline FastAPI prediction server |
+| `dev` | Run API + React admin dashboard together |
+| `init-db` | Create MySQL tables for users and patient records |
 
 ## Configuration
 

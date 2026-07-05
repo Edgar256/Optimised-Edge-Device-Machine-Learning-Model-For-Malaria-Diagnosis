@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: malaria-edge-ml
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt && cd frontend && npm ci && npm run build
+    startCommand: uvicorn src.deployment.api:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: ADMIN_REGISTRATION_SECRET
+        sync: false

@@ -229,6 +229,102 @@ def _cmd_serve_api(args: argparse.Namespace) -> int:
     return 0
 
 
+def _cmd_init_db(_: argparse.Namespace) -> int:
+    try:
+        from src.database.session import init_db
+    except RuntimeError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 1
+
+    applied = init_db()
+    print("Database tables created successfully.")
+    for message in applied:
+        print(f"Applied migration: {message}")
+    return 0
+
+
+def _cmd_dev(args: argparse.Namespace) -> int:
+    """Start the FastAPI backend and React admin dashboard together."""
+    import os
+    import shutil
+    import signal
+    import subprocess
+    import time
+
+    root = find_project_root()
+    frontend_dir = root / "frontend"
+    if not frontend_dir.is_dir():
+        print(f"ERROR: Frontend directory not found at {frontend_dir}", file=sys.stderr)
+        return 1
+    if shutil.which("npm") is None:
+        print("ERROR: npm is not installed or not on PATH.", file=sys.stderr)
+        return 1
+
+    config = load_config()
+    api_cfg = config.get("api", {})
+    host = args.host or api_cfg.get("host", "127.0.0.1")
+    port = args.port or int(os.environ.get("PORT", api_cfg.get("port", 8000)))
+    dashboard_port = args.dashboard_port
+
+    if not (frontend_dir / "node_modules").is_dir():
+        print("Installing frontend dependencies…")
+        install = subprocess.run(["npm", "install"], cwd=frontend_dir)
+        if install.returncode != 0:
+            return install.returncode
+
+    api_cmd = [
+        sys.executable,
+        "-m",
+        "uvicorn",
+        "src.deployment.api:app",
+        "--host",
+        host,
+        "--port",
+        str(port),
+    ]
+    if args.reload:
+        api_cmd.append("--reload")
+
+    frontend_cmd = ["npm", "run", "dev", "--", "--port", str(dashboard_port), "--host"]
+
+    print("Starting development stack (Ctrl+C to stop both)")
+    print(f"  API       : http://{host}:{port}")
+    print(f"  Dashboard : http://localhost:{dashboard_port}")
+    print(f"  API docs  : http://{host}:{port}/docs")
+
+    processes: list[subprocess.Popen] = []
+
+    def shutdown(_signum: int | None = None, _frame: object | None = None) -> None:
+        for proc in processes:
+            if proc.poll() is None:
+                proc.terminate()
+        for proc in processes:
+            if proc.poll() is None:
+                try:
+                    proc.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    proc.kill()
+
+    signal.signal(signal.SIGINT, shutdown)
+    signal.signal(signal.SIGTERM, shutdown)
+
+    try:
+        api_proc = subprocess.Popen(api_cmd, cwd=root)
+        frontend_proc = subprocess.Popen(frontend_cmd + [host], cwd=frontend_dir)
+        processes.extend([api_proc, frontend_proc])
+
+        while True:
+            for proc in processes:
+                code = proc.poll()
+                if code is not None:
+                    shutdown()
+                    return code
+            time.sleep(0.5)
+    except KeyboardInterrupt:
+        shutdown()
+        return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Malaria edge-device ML — project utilities.",
@@ -391,6 +487,31 @@ def build_parser() -> argparse.ArgumentParser:
         help="Enable auto-reload (development only).",
     )
     serve_parser.set_defaults(func=_cmd_serve_api)
+
+    init_db_parser = subparsers.add_parser(
+        "init-db",
+        help="Create database tables for users and patient records (requires DATABASE_URL).",
+    )
+    init_db_parser.set_defaults(func=_cmd_init_db)
+
+    dev_parser = subparsers.add_parser(
+        "dev",
+        help="Run the FastAPI backend and React admin dashboard together.",
+    )
+    dev_parser.add_argument("--host", default="127.0.0.1", help="Bind address for API and dashboard.")
+    dev_parser.add_argument("--port", type=int, default=None, help="API port (default from config).")
+    dev_parser.add_argument(
+        "--dashboard-port",
+        type=int,
+        default=5173,
+        help="Vite dashboard port (default: 5173).",
+    )
+    dev_parser.add_argument(
+        "--reload",
+        action="store_true",
+        help="Enable API auto-reload (development only).",
+    )
+    dev_parser.set_defaults(func=_cmd_dev)
 
     return parser
 

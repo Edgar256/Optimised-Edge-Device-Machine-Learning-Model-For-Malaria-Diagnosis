@@ -50,3 +50,10 @@ htmlcov/
 # Environment secrets
 .env
 .env.*
+!.env.example
+!frontend/.env.example
+
+# Node / React frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.env
