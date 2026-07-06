@@ -1,72 +1,72 @@
 rank,feature,importance
-1,Fever Duration (Days),72.81799943967786
-2,Household Malaria History (Yes/No)_yes,10.47887224519931
-3,Household Malaria History (Yes/No)_no,7.774789527198629
-4,Fever (Yes/No)_no,2.1013383678610453
-5,Age,1.4775691833294111
-6,Fever (Yes/No)_yes,1.248661556686141
-7,Geographical Zone_kasomuro,0.3291716559634285
-8,Vomiting (Yes/No)_yes,0.3172239112871553
-9,visit_month_february,0.3052769888353685
-10,Other Symptoms (Specify)_infrequent_sklearn,0.29604210325444036
-11,Gender (Male/Female)_female,0.2396187022575919
-12,visit_month_march,0.22945910634948632
-13,Health Facility Name_kasomuro,0.21436968801109707
-14,"Exposure Risk (e.g., mosquito-prone area) (Yes/No)_no",0.202124532607126
-15,"Exposure Risk (e.g., mosquito-prone area) (Yes/No)_yes",0.19501946411360674
-16,Other Symptoms (Specify)_cough flue,0.17422620476924583
-17,visit_month_june,0.1559668495727705
-18,visit_month_july,0.1491297157272481
-19,Other Symptoms (Specify)_fever cough,0.12739994276964556
-20,Health Facility Name_mbaraara,0.11893179747496771
-21,Other Symptoms (Specify)_fever headache,0.11661103437330482
-22,Other Symptoms (Specify)_fever,0.11567973141896729
-23,Vomiting (Yes/No)_no,0.1016911766369705
-24,Headache (Yes/No)_yes,0.09027559255195078
-25,Gender (Male/Female)_male,0.08260830367429789
-26,Other Symptoms (Specify)_cough,0.07088466055542786
-27,Fatigue (Yes/No)_yes,0.052722306371712276
-28,Headache (Yes/No)_no,0.05057152588756043
-29,Geographical Zone_kanyamunyu,0.03980385268106309
-30,Geographical Zone_kibaire,0.03825207975364827
-31,visit_month_may,0.036210537253559986
-32,Other Symptoms (Specify)_fever cough flue,0.03218651288681868
-33,Health Facility Name_kasomoro_health_centre,0.03179402617684593
-34,Health Facility Name_kibaire,0.02754490901132992
-35,Other Symptoms (Specify)_cough flue fever,0.025710476138350806
-36,Season of Visit (Dry/Rainy)_Dry,0.023909103460130362
-37,Season of Visit (Dry/Rainy)_Rainy,0.021674172956602015
-38,Geographical Zone_my,0.012365889107028663
-39,Geographical Zone_mbaraara,0.011815473572795727
-40,Chills (Yes/No)_yes,0.008338637213082463
-41,Other Symptoms (Specify)_fever cough headache,0.007819104195162404
-42,Geographical Zone_kasamuro,0.006979063220214776
-43,Health Facility Name_kaamuro,0.006715208105604038
-44,Fatigue (Yes/No)_no,0.006667290612932023
-45,Other Symptoms (Specify)_fever flue cough,0.005673917457841553
-46,Chills (Yes/No)_no,0.005094433781942945
-47,Recent Travel (Yes/No)_yes,0.00434271721317908
-48,Anemia Signs (Yes/No)_no,0.0035277695522485325
-49,Anemia Signs (Yes/No)_yes,0.003432683957351065
-50,Other Symptoms (Specify)_cough headache,0.003082561566533185
-51,visit_month_january,0.0013351132280587125
-52,Health Facility Name_my favorite,0.000679694715582788
-53,Geographical Zone_kyabigambire,0.0004234099281631763
-54,Geographical Zone_kasomoro,0.00024297394805899153
-55,Geographical Zone_like,0.00011967597928838406
-56,Geographical Zone_mg,1.7001809723371495e-05
-57,Geographical Zone_flue cough headache,6.396101126857811e-06
-58,Health Facility Name_like,0.0
-59,Geographical Zone_m,0.0
-60,Recent Travel (Yes/No)_no,0.0
-61,Health Facility Name_my,0.0
-62,Health Facility Name_m,0.0
-63,Other Symptoms (Specify)_cough fever,0.0
-64,Other Symptoms (Specify)_cough headache flue,0.0
-65,Other Symptoms (Specify)_headache,0.0
-66,Other Symptoms (Specify)_headache cough,0.0
-67,Other Symptoms (Specify)_flue cough,0.0
-68,Other Symptoms (Specify)_flue,0.0
-69,Other Symptoms (Specify)_fever flue,0.0
-70,Other Symptoms (Specify)_flue fever,0.0
-71,Other Symptoms (Specify)_headache cough flue,0.0
+1,Fever Duration (Days),1.7281515030679913
+2,Household Malaria History (Yes/No)_yes,0.8090506498708966
+3,Fever (Yes/No)_no,0.17351039297990672
+4,Geographical Zone_kanyamunyu,0.12521347452711246
+5,Household Malaria History (Yes/No)_no,0.01675706056207464
+6,Age,0.0
+7,Health Facility Name_kaamuro,0.0
+8,Health Facility Name_like,0.0
+9,Health Facility Name_kibaire,0.0
+10,Health Facility Name_kasomuro,0.0
+11,Health Facility Name_kasomoro_health_centre,0.0
+12,Health Facility Name_my favorite,0.0
+13,Gender (Male/Female)_female,0.0
+14,Health Facility Name_my,0.0
+15,Health Facility Name_m,0.0
+16,Geographical Zone_kasamuro,0.0
+17,Geographical Zone_kasomoro,0.0
+18,Geographical Zone_kasomuro,0.0
+19,Geographical Zone_kibaire,0.0
+20,Geographical Zone_kyabigambire,0.0
+21,Geographical Zone_like,0.0
+22,Gender (Male/Female)_male,0.0
+23,Health Facility Name_mbaraara,0.0
+24,Geographical Zone_mbaraara,0.0
+25,Geographical Zone_mg,0.0
+26,Geographical Zone_my,0.0
+27,Fever (Yes/No)_yes,0.0
+28,Headache (Yes/No)_no,0.0
+29,Headache (Yes/No)_yes,0.0
+30,Chills (Yes/No)_no,0.0
+31,Chills (Yes/No)_yes,0.0
+32,Vomiting (Yes/No)_no,0.0
+33,Vomiting (Yes/No)_yes,0.0
+34,Fatigue (Yes/No)_no,0.0
+35,Fatigue (Yes/No)_yes,0.0
+36,Anemia Signs (Yes/No)_no,0.0
+37,Anemia Signs (Yes/No)_yes,0.0
+38,Geographical Zone_m,0.0
+39,Geographical Zone_flue cough headache,0.0
+40,Recent Travel (Yes/No)_yes,0.0
+41,Recent Travel (Yes/No)_no,0.0
+42,"Exposure Risk (e.g., mosquito-prone area) (Yes/No)_yes",0.0
+43,"Exposure Risk (e.g., mosquito-prone area) (Yes/No)_no",0.0
+44,Season of Visit (Dry/Rainy)_Dry,0.0
+45,Season of Visit (Dry/Rainy)_Rainy,0.0
+46,Other Symptoms (Specify)_cough,0.0
+47,Other Symptoms (Specify)_cough fever,0.0
+48,Other Symptoms (Specify)_cough flue,0.0
+49,Other Symptoms (Specify)_cough flue fever,0.0
+50,Other Symptoms (Specify)_cough headache,0.0
+51,Other Symptoms (Specify)_cough headache flue,0.0
+52,Other Symptoms (Specify)_fever,0.0
+53,Other Symptoms (Specify)_fever cough,0.0
+54,Other Symptoms (Specify)_fever cough flue,0.0
+55,Other Symptoms (Specify)_fever cough headache,0.0
+56,Other Symptoms (Specify)_fever flue,0.0
+57,Other Symptoms (Specify)_fever flue cough,0.0
+58,Other Symptoms (Specify)_fever headache,0.0
+59,Other Symptoms (Specify)_flue,0.0
+60,Other Symptoms (Specify)_flue cough,0.0
+61,Other Symptoms (Specify)_flue fever,0.0
+62,Other Symptoms (Specify)_headache,0.0
+63,Other Symptoms (Specify)_headache cough,0.0
+64,Other Symptoms (Specify)_headache cough flue,0.0
+65,Other Symptoms (Specify)_infrequent_sklearn,0.0
+66,visit_month_february,0.0
+67,visit_month_january,0.0
+68,visit_month_july,0.0
+69,visit_month_june,0.0
+70,visit_month_march,0.0
+71,visit_month_may,0.0

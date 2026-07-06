@@ -59,6 +59,19 @@ def _explainability_config(config: dict[str, Any]) -> dict[str, Any]:
     return config.get("explainability", {})
 
 
+def resolve_explainability_model_name(config: dict[str, Any] | None = None) -> str:
+    """Return the model used for explainability (defaults to the deployed model)."""
+    cfg = config or load_config()
+    exp_cfg = _explainability_config(cfg)
+    api_cfg = cfg.get("api", {})
+
+    if name := _optional_model_override(exp_cfg.get("model_name")):
+        return name
+    if name := _optional_model_override(api_cfg.get("model_name")):
+        return name
+    return resolve_best_model_name(cfg)
+
+
 def resolve_best_model_name(config: dict[str, Any] | None = None) -> str:
     """Auto-select the best model from the latest evaluation results.
 
@@ -132,18 +145,65 @@ def _apply_publication_style() -> None:
 
 
 def _feature_importance_table(model: Any, feature_names: list[str]) -> pd.DataFrame:
-    if not hasattr(model, "feature_importances_"):
-        inner = getattr(model, "named_steps", {}).get("model", model) if hasattr(model, "named_steps") else model
-        if not hasattr(inner, "feature_importances_"):
-            return pd.DataFrame(columns=["feature", "importance", "rank"])
+    inner = model
+    if hasattr(model, "named_steps"):
+        inner = model.named_steps.get("model", model)
+
+    if hasattr(inner, "feature_importances_"):
         importances = inner.feature_importances_
+    elif hasattr(inner, "coef_"):
+        importances = np.abs(np.ravel(inner.coef_))
     else:
-        importances = model.feature_importances_
+        return pd.DataFrame(columns=["feature", "importance", "rank"])
 
     table = pd.DataFrame({"feature": feature_names, "importance": importances})
     table = table.sort_values("importance", ascending=False).reset_index(drop=True)
     table.insert(0, "rank", table.index + 1)
     return table
+
+
+def _shap_values_matrix(model: Any, X: np.ndarray) -> tuple[np.ndarray, np.ndarray] | None:
+    """Compute SHAP values for tree or linear/sklearn pipeline models."""
+    try:
+        import shap
+        from sklearn.linear_model import LogisticRegression
+    except ImportError:
+        return None
+
+    X_array = np.asarray(X)
+    sample_size = min(200, len(X_array))
+
+    inner = model
+    if hasattr(model, "named_steps"):
+        scaler = model.named_steps.get("scaler")
+        if scaler is not None:
+            X_array = scaler.transform(X_array)
+        inner = model.named_steps.get("model", model)
+
+    X_eval = X_array[:sample_size]
+    background = X_array if len(X_array) <= 100 else shap.sample(X_array, 100, random_state=42)
+
+    shap_values: np.ndarray | list[np.ndarray] | None = None
+    try:
+        if isinstance(inner, LogisticRegression):
+            explainer = shap.LinearExplainer(inner, background)
+            shap_values = explainer.shap_values(X_eval)
+        else:
+            explainer = shap.TreeExplainer(inner)
+            shap_values = explainer.shap_values(X_eval)
+    except Exception:
+        try:
+            explanation = shap.Explainer(model, background)(X_eval)
+            shap_values = explanation.values
+        except Exception:
+            return None
+
+    if isinstance(shap_values, list):
+        shap_values = shap_values[1]
+    elif getattr(shap_values, "ndim", 0) == 3:
+        shap_values = shap_values[:, :, 1]
+
+    return X_eval, np.asarray(shap_values)
 
 
 def _permutation_importance_table(
@@ -206,21 +266,22 @@ def _aggregate_symptom_importance(importance_df: pd.DataFrame, value_column: str
     return table
 
 
-def _compute_shap_summary(model: Any, X: np.ndarray, feature_names: list[str]) -> pd.DataFrame | None:
+def _shap_skip_narrative(shap_available: bool) -> str:
     try:
-        import shap
+        import shap  # noqa: F401
     except ImportError:
+        return "SHAP analysis was skipped because the `shap` package is not installed."
+    if not shap_available:
+        return "SHAP values could not be computed for this model."
+    return ""
+
+
+def _compute_shap_summary(model: Any, X: np.ndarray, feature_names: list[str]) -> pd.DataFrame | None:
+    computed = _shap_values_matrix(model, X)
+    if computed is None:
         return None
 
-    estimator = model
-    if hasattr(model, "named_steps"):
-        estimator = model.named_steps.get("model", model)
-
-    explainer = shap.TreeExplainer(estimator)
-    shap_values = explainer.shap_values(X)
-    if isinstance(shap_values, list):
-        shap_values = shap_values[1]
-
+    _, shap_values = computed
     mean_abs = np.abs(shap_values).mean(axis=0)
     table = pd.DataFrame({"feature": feature_names, "mean_abs_shap": mean_abs})
     table = table.sort_values("mean_abs_shap", ascending=False).reset_index(drop=True)
@@ -261,24 +322,21 @@ def _plot_shap_figures(model: Any, X: np.ndarray, feature_names: list[str], outp
     except ImportError:
         return False
 
-    estimator = model
-    if hasattr(model, "named_steps"):
-        estimator = model.named_steps.get("model", model)
+    computed = _shap_values_matrix(model, X)
+    if computed is None:
+        return False
 
-    explainer = shap.TreeExplainer(estimator)
-    shap_values = explainer.shap_values(X)
-    if isinstance(shap_values, list):
-        shap_values = shap_values[1]
+    X_eval, shap_values = computed
 
     _apply_publication_style()
     plt.figure(figsize=(9, 6))
-    shap.summary_plot(shap_values, X, feature_names=feature_names, show=False, max_display=15)
+    shap.summary_plot(shap_values, X_eval, feature_names=feature_names, show=False, max_display=15)
     plt.tight_layout()
     plt.savefig(output_dir / "shap_beeswarm.png", bbox_inches="tight", dpi=300)
     plt.close()
 
     plt.figure(figsize=(8, 6))
-    shap.summary_plot(shap_values, X, feature_names=feature_names, plot_type="bar", show=False, max_display=15)
+    shap.summary_plot(shap_values, X_eval, feature_names=feature_names, plot_type="bar", show=False, max_display=15)
     plt.tight_layout()
     plt.savefig(output_dir / "shap_bar.png", bbox_inches="tight", dpi=300)
     plt.close()
@@ -362,9 +420,9 @@ def render_explainability_report(result: ExplainabilityResult) -> str:
     """Render markdown explainability report."""
     stats = result.stats
     lines = [
-        "# Best Model Explainability Report",
+        "# Deployed Model Explainability Report",
         "",
-        f"- **Model:** `{result.model_name}`",
+        f"- **Model:** `{result.model_name}` (deployed edge model)",
         f"- **Generated (UTC):** {stats.get('generated_at_utc')}",
         f"- **Samples analysed:** {stats.get('samples')}",
         f"- **Features:** {stats.get('feature_count')}",
@@ -404,12 +462,12 @@ def render_explainability_report(result: ExplainabilityResult) -> str:
 
 
 def run_explainability(config: dict[str, Any] | None = None) -> ExplainabilityResult:
-    """Generate explainability artifacts for the best-performing model."""
+    """Generate explainability artifacts for the deployed malaria diagnosis model."""
     cfg = config or load_config()
     exp_cfg = _explainability_config(cfg)
     random_seed = int(cfg["project"].get("random_seed", 42))
 
-    model_name = _optional_model_override(exp_cfg.get("model_name")) or resolve_best_model_name(cfg)
+    model_name = resolve_explainability_model_name(cfg)
     artifact = load_model_artifact(model_name, cfg)
     model = _get_estimator(artifact)
     X, y, feature_names = load_preprocessed_training_data(cfg)
@@ -489,7 +547,7 @@ def run_explainability(config: dict[str, Any] | None = None) -> ExplainabilityRe
         row = pd.read_csv(after_path)
         row = row[row["model_name"] == model_name].iloc[0]
         performance_summary = (
-            f"The selected model achieved ROC AUC **{row['roc_auc_mean']:.3f}** "
+            f"The deployed model achieved ROC AUC **{row['roc_auc_mean']:.3f}** "
             f"(95% CI [{row['roc_auc_ci_low']:.3f}, {row['roc_auc_ci_high']:.3f}]), "
             f"recall **{row['recall_mean']:.3f}**, and F1 **{row['f1_mean']:.3f}** after hyperparameter optimization."
         )
@@ -505,7 +563,7 @@ def run_explainability(config: dict[str, Any] | None = None) -> ExplainabilityRe
         "symptom_narrative_permutation": _auto_symptom_narrative(symptom_ranking, "permutation importance"),
         "symptom_narrative_shap": _auto_symptom_narrative(symptom_shap, "SHAP values")
         if not symptom_shap.empty
-        else "SHAP analysis was skipped because the `shap` package is not installed.",
+        else _shap_skip_narrative(shap_summary is not None),
         "shap_generated": shap_generated,
         "pdp_files": pdp_files,
         "best_params": artifact.get("best_params"),
