@@ -27,7 +27,6 @@ models/*
 !models/optimized/logistic_regression.joblib
 !models/tflite/
 !models/tflite/**
-figures/*
 !figures/.gitkeep
 data/processed/*
 !data/processed/.gitkeep

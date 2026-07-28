@@ -108,14 +108,16 @@ hyperparameter_optimization:
 
 explainability:
   output_dir: reports/explainability
-  # Matches the deployed edge model (same as api / baseline rank-1).
-  model_name: logistic_regression
+  # Optional override. Leave unset to auto-select rank 1 from
+  # results/baseline_ranking.csv (loads optimized artifact when available).
+  # model_name: catboost
 
 api:
   host: 0.0.0.0
   port: 8000
-  # Pinned to the baseline rank-1 edge model. Leave unset to auto-select from baseline_ranking.csv.
-  model_name: logistic_regression
+  # Optional override. Leave unset to auto-select baseline rank 1
+  # (same rule as explainability). Uncomment only to pin a specific model.
+  # model_name: catboost
   cors_origins:
     - "*"
   defaults:

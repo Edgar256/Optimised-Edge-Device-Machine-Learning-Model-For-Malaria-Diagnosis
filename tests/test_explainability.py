@@ -8,7 +8,6 @@ from src.evaluation.explainability import (
     _auto_symptom_narrative,
     _symptom_group_name,
     resolve_best_model_name,
-    resolve_explainability_model_name,
 )
 
 
@@ -40,13 +39,6 @@ def test_auto_symptom_narrative_mentions_top_symptoms() -> None:
     )
     narrative = _auto_symptom_narrative(ranking, "permutation importance")
     assert "Fever (Yes/No)" in narrative
-
-
-def test_resolve_explainability_model_name_uses_config_pin() -> None:
-    from src.utils.config import load_config
-
-    cfg = load_config()
-    assert resolve_explainability_model_name(cfg) == "logistic_regression"
 
 
 def test_resolve_best_model_name_auto_selects_by_baseline_rank() -> None:

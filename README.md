@@ -162,13 +162,13 @@ Runs `RandomizedSearchCV` on the top-ranked optimizable models and writes:
 - `results/hyperparameter_comparison.csv`
 - `reports/hyperparameter_optimization_report.md`
 
-### 10. Explain the deployed model
+### 10. Explain the best model
 
 ```bash
 python main.py explain-model
 ```
 
-Generates SHAP, permutation importance, PDPs, and symptom rankings for **`logistic_regression`** (configured in `config/default.yaml` as the deployed edge model):
+Generates SHAP, permutation importance, PDPs, and symptom rankings:
 
 - `reports/explainability/best_model_explainability.md`
 - `reports/explainability/figures/`
