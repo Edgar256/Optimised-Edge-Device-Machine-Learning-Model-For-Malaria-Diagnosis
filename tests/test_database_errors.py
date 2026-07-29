@@ -25,7 +25,7 @@ def test_database_startup_error_message_includes_target_and_mysql_detail() -> No
     message = database_startup_error_message(exc, "user=admin host=example.com database=db")
     assert "user=admin" in message
     assert "1045" in message
-    assert "Add User To Database" in message
+    assert "Allowed IP" in message
 
 
 def test_operational_error_tips_1045() -> None:
@@ -33,8 +33,10 @@ def test_operational_error_tips_1045() -> None:
         args = (1045, "Access denied")
 
     exc = OperationalError("statement", {}, FakeOrig())
-    assert "1045" in operational_error_tips(exc)
-    assert "Add User To Database" in operational_error_tips(exc)
+    tips = operational_error_tips(exc)
+    assert "1045" in tips
+    assert "Aiven" in tips
+    assert "Allowed IP" in tips
 
 
 def test_operational_error_tips_2003() -> None:
@@ -44,4 +46,4 @@ def test_operational_error_tips_2003() -> None:
     exc = OperationalError("statement", {}, FakeOrig())
     tips = operational_error_tips(exc)
     assert "2003" in tips
-    assert "Remote MySQL" in tips
+    assert "Allowed IP" in tips

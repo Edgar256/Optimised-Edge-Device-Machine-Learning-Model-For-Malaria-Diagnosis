@@ -28,23 +28,27 @@ def operational_error_tips(exc: OperationalError) -> str:
     errno = operational_error_errno(exc)
     if errno == 1045:
         return (
-            "MySQL rejected the username or password (1045). In Cloudsters/cPanel: "
-            "(1) reset the MySQL password for this user, "
-            "(2) use Databases → Add User To Database to grant ALL PRIVILEGES on the database, "
-            "(3) confirm DATABASE_URL uses that exact user, password, and database name."
+            "MySQL rejected the username or password (1045). "
+            "(1) Copy the exact password from your provider console (Aiven: Service → Users → reset/copy). "
+            "(2) Confirm DATABASE_URL user, password, host, port, and database name match the console. "
+            "(3) On Aiven, open Connection info → Allowed IP addresses and allow Render "
+            "(0.0.0.0/0 for public access, or add the IP shown in the error). "
+            "(4) URL-encode special characters in the password (@ → %40, # → %23)."
         )
     if errno == 2003:
         return (
-            "Cannot reach the MySQL host (2003). Open port 3306 on Cloudsters, add your IP "
-            "under Databases → Remote MySQL (or use % for any host). "
-            "If Render gets 1045 but local check-db gets 2003, your home IP may be blocked — "
-            "fix credentials in Cloudsters first, then redeploy Render."
+            "Cannot reach the MySQL host (2003). Check host/port, allow public/network access "
+            "in the provider console (Aiven Allowed IP addresses), and ensure SSL is enabled "
+            "(?ssl-mode=REQUIRED or ?ssl=true) if the provider requires it."
         )
     if errno == 1049:
-        return "Database does not exist (1049). Create it in Cloudsters and use the exact name in DATABASE_URL."
+        return (
+            "Database does not exist (1049). Create the database in the provider console "
+            "(Aiven: Databases) and use that exact name in the DATABASE_URL path."
+        )
     return (
-        "Confirm Cloudsters Remote MySQL allows % (any host), user is linked to the database, "
-        "and try appending ?ssl=true to DATABASE_URL if the provider requires SSL."
+        "Confirm host/port/user/password/database in DATABASE_URL, allow the client IP "
+        "in the provider firewall, and use ?ssl-mode=REQUIRED or ?ssl=true when SSL is required."
     )
 
 

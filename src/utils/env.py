@@ -11,18 +11,26 @@ from dotenv import load_dotenv
 from src.utils.paths import find_project_root
 
 # Query params handled via connect_args instead of the SQLAlchemy URL.
-_MYSQL_SSL_QUERY_KEYS = frozenset({"ssl", "ssl_mode", "ssl_verify"})
+# Include Aiven/MySQL CLI hyphenated aliases (ssl-mode) so they are not passed to pymysql.
+_MYSQL_SSL_QUERY_KEYS = frozenset({"ssl", "ssl_mode", "ssl-mode", "ssl_verify", "ssl-verify"})
 
 # Hosted DB URLs may include pool hints that pymysql.connect() rejects.
 _MYSQL_UNSUPPORTED_QUERY_KEYS = frozenset(
     {
         "connection_limit",
+        "connect_timeout",
         "pool_timeout",
         "pgbouncer",
         "sslaccept",
         *_MYSQL_SSL_QUERY_KEYS,
     }
 )
+
+# Map provider/CLI query keys onto the names used by our SSL helpers.
+_MYSQL_QUERY_KEY_ALIASES = {
+    "ssl-mode": "ssl_mode",
+    "ssl-verify": "ssl_verify",
+}
 
 
 def _load_dotenv() -> None:
@@ -35,6 +43,18 @@ def _parse_mysql_url(url: str):
     if url.startswith("mysql://"):
         url = "mysql+pymysql://" + url[len("mysql://") :]
     return make_url(url)
+
+
+def _normalize_mysql_query(query: dict[str, str]) -> dict[str, str]:
+    """Collapse hyphenated provider aliases (e.g. ssl-mode → ssl_mode)."""
+    normalized: dict[str, str] = {}
+    for key, value in query.items():
+        canonical = _MYSQL_QUERY_KEY_ALIASES.get(key, key)
+        # Prefer an explicit canonical key if both forms are present.
+        if canonical in normalized and key in _MYSQL_QUERY_KEY_ALIASES:
+            continue
+        normalized[canonical] = value
+    return normalized
 
 
 def _mysql_ssl_verify(query: dict[str, str]) -> bool:
@@ -72,7 +92,8 @@ def normalize_database_url(url: str) -> str:
             if key not in _MYSQL_UNSUPPORTED_QUERY_KEYS
         }
         parsed = parsed.set(query=filtered)
-    return str(parsed)
+    # str(URL) redacts the password as "***" — that must never be used for connecting.
+    return parsed.render_as_string(hide_password=False)
 
 
 def get_mysql_connect_args(url: str | None = None) -> dict:
@@ -85,7 +106,7 @@ def get_mysql_connect_args(url: str | None = None) -> dict:
     if parsed.drivername.split("+", 1)[0] != "mysql":
         return {}
 
-    query = dict(parsed.query or {})
+    query = _normalize_mysql_query(dict(parsed.query or {}))
     if _mysql_ssl_enabled(query):
         return {"ssl": _build_mysql_ssl_context(query)}
     return {}

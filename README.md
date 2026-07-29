@@ -324,42 +324,36 @@ After deploy:
 
 Tables are created/migrated automatically on startup, or run `python main.py init-db` once against your MySQL instance.
 
-**MySQL on Render (CloudClusters / Cloudsters):** Use the hostname, port, and credentials from your CloudClusters dashboard — not a raw server IP or port 3306.
+**MySQL on Render (Aiven or similar):** Paste the provider connection URL into Render **Environment** as `DATABASE_URL`. Aiven-style `?ssl-mode=REQUIRED` is supported (mapped to PyMySQL SSL connect args; the hyphenated param is stripped so it is not passed to the driver).
 
-Provider docs example:
-
-```bash
-mysql -h mysql-202816-0.cloudclusters.net -P 19889 -u admin -p<Password>
-```
-
-Convert to `DATABASE_URL` for Render **Environment**:
+Example (Aiven):
 
 ```
-mysql://admin:YOUR_PASSWORD@mysql-202816-0.cloudclusters.net:19889/malaria_data_db?ssl=true&ssl_verify=false
+mysql://avnadmin:YOUR_PASSWORD@mysql-XXXX.aivencloud.com:16447/malaria_data_db?ssl-mode=REQUIRED
 ```
 
-| Field | CloudClusters value |
-|-------|---------------------|
-| Host | `mysql-202816-0.cloudclusters.net` (from your dashboard) |
-| Port | `19889` (not 3306) |
-| User | `admin` |
-| Database | `malaria_data_db` |
-| SSL | `?ssl=true&ssl_verify=false` (self-signed cert) |
-
-Do **not** use `163.123.183.83`, port `3306`, or user `m4l4r14_us3r`.
+| Field | Example |
+|-------|---------|
+| Host | `mysql-XXXX.aivencloud.com` (from Aiven) |
+| Port | provider port (e.g. `16447`, not `3306`) |
+| User | `avnadmin` (or your provider user) |
+| Database | `malaria_data_db` (create it in the provider console if needed) |
+| SSL | `?ssl-mode=REQUIRED` or `?ssl=true` |
 
 **Test before deploying:**
 
 ```bash
-export DATABASE_URL='mysql://admin:YOUR_PASSWORD@mysql-202816-0.cloudclusters.net:19889/malaria_data_db?ssl=true&ssl_verify=false'
+export DATABASE_URL='mysql://avnadmin:YOUR_PASSWORD@mysql-XXXX.aivencloud.com:16447/malaria_data_db?ssl-mode=REQUIRED'
 python main.py check-db
 ```
 
 Paste the same URL into Render → Environment → `DATABASE_URL` → Save → Manual Deploy.
 
-**1045 Access denied:** Wrong password — copy the exact `admin` password from CloudClusters.
+**1045 Access denied:** Wrong username/password, or database user not granted on that schema.
 
-**2003 Can't connect:** Wrong host/port, or add `?ssl=true&ssl_verify=false`.
+**2003 Can't connect:** Wrong host/port, or SSL required — use `?ssl-mode=REQUIRED` / `?ssl=true`.
+
+**TypeError unexpected keyword `ssl-mode`:** Upgrade to a build that includes the `ssl-mode` URL normalization in `src/utils/env.py` (this repo), or temporarily use `?ssl=true` instead.
 
 ### 14. User accounts and patient records
 
